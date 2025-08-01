@@ -617,6 +617,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/users/{userId}/authorize:
+    post:
+      tags:
+        - user
+      description: Authorize a user id.
+      operationId: authorize user id
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: string
+            pattern: ^usr-[A-Za-z0-9]+$
+      responses:
+        '201':
+          description: The user is authorized and
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAuthResponse"
+        '400':
+          description: The request didn't supply all the necessary data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestErrorResponse"
+        '404':
+          description: User was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     CreateBankAccountRequest:
@@ -632,7 +673,7 @@ components:
             - "My Account"
         accountType:
           type: string
-          enum: 
+          enum:
             - "personal"
     UpdateBankAccountRequest:
       type: object
@@ -644,7 +685,7 @@ components:
             - "My Account"
         accountType:
           type: string
-          enum: 
+          enum:
             - "personal"
     ListBankAccountsResponse:
       type: object
@@ -654,7 +695,7 @@ components:
         accounts:
           type: array
           items:
-             $ref: "#/components/schemas/BankAccountResponse"
+            $ref: "#/components/schemas/BankAccountResponse"
     BankAccountResponse:
       type: object
       required:
@@ -675,13 +716,13 @@ components:
             - "01765432"
         sortCode:
           type: string
-          enum: 
+          enum:
             - "10-10-10"
         name:
           type: string
         accountType:
           type: string
-          enum: 
+          enum:
             - "personal"
         balance:
           type: number
@@ -724,7 +765,7 @@ components:
             - "GBP"
         type:
           type: string
-          enum: 
+          enum:
             - "deposit"
             - "withdrawal"
         reference:
@@ -737,7 +778,7 @@ components:
         transactions:
           type: array
           items:
-             $ref: "#/components/schemas/TransactionResponse"
+            $ref: "#/components/schemas/TransactionResponse"
     TransactionResponse:
       type: object
       required:
@@ -747,7 +788,7 @@ components:
         - type
         - createdTimestamp
       properties:
-        id: 
+        id:
           type: string
           pattern: ^tan-[A-Za-z0-9]$
           examples:
@@ -763,7 +804,7 @@ components:
             - "GBP"
         type:
           type: string
-          enum: 
+          enum:
             - "deposit"
             - "withdrawal"
         reference:
@@ -771,7 +812,7 @@ components:
         userId:
           type: string
           format: ^usr-[A-Za-z0-9]+$
-          examples: 
+          examples:
             - usr-abc123
         createdTimestamp:
           type: string
@@ -813,7 +854,7 @@ components:
           format: ^\+[1-9]\d{1,14}$
         email:
           type: string
-          format: email    
+          format: email
     UpdateUserRequest:
       type: object
       properties:
@@ -895,6 +936,28 @@ components:
           type: string
           format: 'date-time'
         updatedTimestamp:
+          type: string
+          format: 'date-time'
+    UserAuthResponse:
+      type: object
+      required:
+        - userId
+        - token
+        - type
+        - createdTimestamp
+      properties:
+        userId:
+          type: string
+          format: ^usr-[A-Za-z0-9]+$
+        token:
+          type: string
+          examples:
+            - "Jwt token"
+        type:
+          type: string
+          examples:
+            - "Bearer"
+        createdTimestamp:
           type: string
           format: 'date-time'
     ErrorResponse:

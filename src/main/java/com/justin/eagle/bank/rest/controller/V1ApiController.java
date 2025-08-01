@@ -1,5 +1,6 @@
 package com.justin.eagle.bank.rest.controller;
 
+import com.justin.eagle.bank.auth.AuthenticateUserService;
 import com.justin.eagle.bank.generated.openapi.rest.api.V1Api;
 import com.justin.eagle.bank.generated.openapi.rest.model.BankAccountResponse;
 import com.justin.eagle.bank.generated.openapi.rest.model.CreateBankAccountRequest;
@@ -10,15 +11,25 @@ import com.justin.eagle.bank.generated.openapi.rest.model.ListTransactionsRespon
 import com.justin.eagle.bank.generated.openapi.rest.model.TransactionResponse;
 import com.justin.eagle.bank.generated.openapi.rest.model.UpdateBankAccountRequest;
 import com.justin.eagle.bank.generated.openapi.rest.model.UpdateUserRequest;
+import com.justin.eagle.bank.generated.openapi.rest.model.UserAuthResponse;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserResponse;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
 public class V1ApiController implements V1Api {
 
+    @Autowired
+    private AuthenticateUserService authenticateUserService;
 
     @Override
     public ResponseEntity<BankAccountResponse> createAccount(CreateBankAccountRequest createBankAccountRequest) {
@@ -78,5 +89,14 @@ public class V1ApiController implements V1Api {
     @Override
     public ResponseEntity<UserResponse> updateUserByID(String userId, UpdateUserRequest updateUserRequest) {
         return V1Api.super.updateUserByID(userId, updateUserRequest);
+    }
+
+
+    @Override
+    public ResponseEntity<UserAuthResponse> authorizeUserId(
+            @Pattern(regexp = "^usr-[A-Za-z0-9]+$") @Parameter(name = "userId", description = "ID of the user", required = true, in = ParameterIn.PATH) @PathVariable("userId") String userId) {
+
+        final UserAuthResponse userAuthResponse = authenticateUserService.buildNewAuthToken(userId);
+        return new ResponseEntity<>(userAuthResponse, HttpStatus.CREATED);
     }
 }

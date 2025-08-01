@@ -1,3 +1,7 @@
 spring:
   application:
     name: EagleBank
+
+app:
+  config:
+    auth-expiry-seconds: "${AUTH_EXPIRY_SECONDS:300}"
