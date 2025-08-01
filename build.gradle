@@ -23,7 +23,7 @@ configurations {
 sourceSets {
 	main {
 		java {
-			srcDir "build/generated-resources/src/main/java"
+			srcDir "$rootDir/build/generated-openapi/src/main/java"
 		}
 	}
 }
@@ -35,11 +35,15 @@ repositories {
 dependencies {
 //	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'jakarta.validation:jakarta.validation-api'
+	implementation 'org.hibernate.validator:hibernate-validator'
+	implementation 'io.swagger.core.v3:swagger-annotations-jakarta:2.2.16'
 	compileOnly 'org.projectlombok:lombok'
 //	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testImplementation 'io.zonky.test:embedded-postgres:2.0.1'
 }
 
 tasks.named('test') {
@@ -49,9 +53,10 @@ tasks.named('test') {
 openApiGenerate {
 	generatorName.set("spring")
 	inputSpec.set("$rootDir/openapi/openapi.yaml")
-	apiPackage.set("com.justin.bank.generated.openapi.rest.api")
+	outputDir.set("$buildDir/generated-openapi")
+	apiPackage.set("com.justin.eagle.bank.generated.openapi.rest.api")
 	invokerPackage.set("org.openapi.example.invoker")
-	modelPackage.set("com.justin.bank.generated.openapi.rest.model")
+	modelPackage.set("com.justin.eagle.bank.generated.openapi.rest.model")
 	configOptions.set([
 	        dateLibrary   : 'java8',
 			bigDecimalAsString : 'true',
