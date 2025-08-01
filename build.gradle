@@ -1,0 +1,82 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.8'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.openapi.generator' version '7.0.1'
+}
+
+group = 'com.justin.eagle'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+sourceSets {
+	main {
+		java {
+			srcDir "build/generated-resources/src/main/java"
+		}
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+//	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+//	runtimeOnly 'org.postgresql:postgresql'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+openApiGenerate {
+	generatorName.set("spring")
+	inputSpec.set("$rootDir/openapi/openapi.yaml")
+	apiPackage.set("com.justin.bank.generated.openapi.rest.api")
+	invokerPackage.set("org.openapi.example.invoker")
+	modelPackage.set("com.justin.bank.generated.openapi.rest.model")
+	configOptions.set([
+	        dateLibrary   : 'java8',
+			bigDecimalAsString : 'true',
+			interfaceOnly  : 'true',
+			generateSupportingFiles : 'false',
+			openApiNullable : 'false',
+			useBeanValidation : 'true',
+			useJakartaEe : 'true',
+			useSpringBoot3 : 'true',
+			additionalModelTypeAnnotations : '@lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor; ',
+			generatedConstructorWithRequiredArgs : 'false',
+			documentationProvider : 'springdoc'
+
+	])
+	typeMappings.set([
+	        'Timestamp' : 'Instant',
+			'Date': 'LocalDate',
+			'OffsetDateTime' : 'Instant'
+	])
+	importMappings.set([
+	        'java.time.OffsetDateTime': 'java.time.Instant'
+	])
+	additionalProperties.set([
+	        removeEnumValuePrefix: 'false'
+	])
+}
+
+compileJava.dependsOn tasks.openApiGenerate
