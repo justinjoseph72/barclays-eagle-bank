@@ -33,11 +33,13 @@ repositories {
 }
 
 dependencies {
-//	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'jakarta.validation:jakarta.validation-api'
 	implementation 'org.hibernate.validator:hibernate-validator'
 	implementation 'io.swagger.core.v3:swagger-annotations-jakarta:2.2.16'
+	implementation 'com.zaxxer:HikariCP'
 
 	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
 	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api
@@ -47,11 +49,18 @@ dependencies {
 	// https://mvnrepository.com/artifact/com.auth0/java-jwt
 	implementation("com.auth0:java-jwt:4.5.0")
 	compileOnly 'org.projectlombok:lombok'
-//	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'io.zonky.test:embedded-postgres:2.0.1'
+
+	// https://mvnrepository.com/artifact/org.liquibase/liquibase-core
+	implementation("org.liquibase:liquibase-core")
+
+//	compileOnly 'com.github.javafaker:javafaker:1.0.2'
+	// https://mvnrepository.com/artifact/org.yaml/snakeyaml
+//	testImplementation("org.yaml:snakeyaml:2.4")
 }
 
 tasks.named('test') {

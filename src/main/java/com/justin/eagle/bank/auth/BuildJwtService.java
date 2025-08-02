@@ -2,7 +2,6 @@ package com.justin.eagle.bank.auth;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Date;
 import java.util.Map;
 
 import javax.crypto.spec.SecretKeySpec;

@@ -13,8 +13,12 @@ import com.justin.eagle.bank.generated.openapi.rest.model.UpdateBankAccountReque
 import com.justin.eagle.bank.generated.openapi.rest.model.UpdateUserRequest;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserAuthResponse;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserResponse;
+import com.justin.eagle.bank.rest.mappers.CreateNewUserMapper;
+import com.justin.eagle.bank.user.CreateUserService;
+import com.justin.eagle.bank.user.model.ProvisionedUser;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -30,6 +35,10 @@ public class V1ApiController implements V1Api {
 
     @Autowired
     private AuthenticateUserService authenticateUserService;
+
+    @Autowired CreateUserService createUserService;
+
+    @Autowired CreateNewUserMapper createNewUserMapper;
 
     @Override
     public ResponseEntity<BankAccountResponse> createAccount(CreateBankAccountRequest createBankAccountRequest) {
@@ -42,8 +51,13 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
-    public ResponseEntity<UserResponse> createUser(CreateUserRequest createUserRequest) {
-        return V1Api.super.createUser(createUserRequest);
+    public ResponseEntity<UserResponse> createUser(@Parameter(name = "CreateUserRequest", description = "Create a new user", required = true)
+    @Valid @RequestBody CreateUserRequest createUserRequest) {
+
+        final ProvisionedUser user = createUserService.createUser(createNewUserMapper.createNewUser(createUserRequest));
+        return new ResponseEntity<>(createNewUserMapper.createUserResponse(user, createUserRequest), HttpStatus.CREATED);
+
+        ///        V1Api.super.createUser(createUserRequest);
     }
 
     @Override

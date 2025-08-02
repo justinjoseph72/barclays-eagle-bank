@@ -1,0 +1,52 @@
+package com.justin.eagle.bank.rest.mappers;
+
+import java.util.Objects;
+import java.util.stream.Stream;
+
+import com.justin.eagle.bank.generated.openapi.rest.model.CreateUserRequest;
+import com.justin.eagle.bank.generated.openapi.rest.model.CreateUserRequestAddress;
+import com.justin.eagle.bank.generated.openapi.rest.model.UserResponse;
+import com.justin.eagle.bank.user.model.NewUser;
+import com.justin.eagle.bank.user.model.ProvisionedUser;
+import com.justin.eagle.bank.user.model.UserAddress;
+import com.justin.eagle.bank.user.model.UserProfile;
+import jakarta.validation.Valid;
+import org.springframework.stereotype.Component;
+
+@Component
+public class CreateNewUserMapper {
+
+
+    public NewUser createNewUser(CreateUserRequest request) {
+
+
+        final CreateUserRequestAddress address = request.getAddress();
+        return NewUser.builder()
+                .profile(UserProfile.builder()
+                        .name(request.getName())
+                        .emailAddress(request.getEmail())
+                        .phoneNumber(request.getPhoneNumber())
+                        .build())
+                .address(UserAddress.builder()
+                        .town(address.getTown())
+                        .county(address.getCounty())
+                        .postCode(address.getPostcode())
+                        .addressLines(Stream.of(address.getLine1(),address.getLine2(), address.getLine3())
+                                .filter(Objects::nonNull)
+                                .toList())
+                        .build())
+                .build();
+    }
+
+    public UserResponse createUserResponse(ProvisionedUser user, @Valid CreateUserRequest createUserRequest) {
+        return UserResponse.builder()
+                .id(user.externalUserId())
+                .createdTimestamp(user.createdTimestamp())
+                .address(createUserRequest.getAddress())
+                .phoneNumber(createUserRequest.getPhoneNumber())
+                .email(createUserRequest.getEmail())
+                .name(createUserRequest.getName())
+                .updatedTimestamp(user.createdTimestamp())
+                .build();
+    }
+}

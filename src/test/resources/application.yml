@@ -4,12 +4,12 @@ spring:
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: postgres
-    password: postgres
+    url: "${db.url}"
+    username: "${db.user}"
+    password: "${db.password}"
     hikari:
       poolName: BankDbHikariCp
-#      transaction-isolation: TRANSACTION_READ_COMMITED
+#      transaction-isolation:  TRANSACTION_READ_COMMITED
       autocommit: false
       maximumPoolSize: 10
       data-source-properties:
@@ -20,4 +20,4 @@ spring:
 
 app:
   config:
-    auth-expiry-seconds: "${AUTH_EXPIRY_SECONDS:300}"
+    auth-expiry-seconds: 200
