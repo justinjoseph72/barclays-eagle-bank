@@ -13,20 +13,21 @@ import com.justin.eagle.bank.generated.openapi.rest.model.UpdateBankAccountReque
 import com.justin.eagle.bank.generated.openapi.rest.model.UpdateUserRequest;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserAuthResponse;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserResponse;
-import com.justin.eagle.bank.rest.mappers.CreateNewUserMapper;
-import com.justin.eagle.bank.user.CreateUserService;
+import com.justin.eagle.bank.rest.mappers.UserMapper;
+import com.justin.eagle.bank.user.UserCrudService;
 import com.justin.eagle.bank.user.model.ProvisionedUser;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.headers.Header;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -36,9 +37,9 @@ public class V1ApiController implements V1Api {
     @Autowired
     private AuthenticateUserService authenticateUserService;
 
-    @Autowired CreateUserService createUserService;
+    @Autowired UserCrudService userCrudService;
 
-    @Autowired CreateNewUserMapper createNewUserMapper;
+    @Autowired UserMapper userMapper;
 
     @Override
     public ResponseEntity<BankAccountResponse> createAccount(CreateBankAccountRequest createBankAccountRequest) {
@@ -54,10 +55,8 @@ public class V1ApiController implements V1Api {
     public ResponseEntity<UserResponse> createUser(@Parameter(name = "CreateUserRequest", description = "Create a new user", required = true)
     @Valid @RequestBody CreateUserRequest createUserRequest) {
 
-        final ProvisionedUser user = createUserService.createUser(createNewUserMapper.createNewUser(createUserRequest));
-        return new ResponseEntity<>(createNewUserMapper.createUserResponse(user, createUserRequest), HttpStatus.CREATED);
-
-        ///        V1Api.super.createUser(createUserRequest);
+        final ProvisionedUser user = userCrudService.createUser(userMapper.createNewUser(createUserRequest));
+        return new ResponseEntity<>(userMapper.buildUserResponse(user), HttpStatus.CREATED);
     }
 
     @Override
@@ -80,9 +79,18 @@ public class V1ApiController implements V1Api {
         return V1Api.super.fetchAccountTransactionByID(accountNumber, transactionId);
     }
 
+    //TODO check auth and error handling
     @Override
-    public ResponseEntity<UserResponse> fetchUserByID(String userId) {
-        return V1Api.super.fetchUserByID(userId);
+    public ResponseEntity<UserResponse> fetchUserByID( @Pattern(regexp = "^usr-[A-Za-z0-9]+$")
+    @Parameter(name = "userId", description = "ID of the user", required = true, in = ParameterIn.PATH)
+    @PathVariable("userId") String userId) {
+        return userCrudService.fetchUser(userId)
+                .map(userMapper::buildUserResponse)
+                .map(userResponse -> new ResponseEntity<>(userResponse, HttpStatus.OK))
+                .orElseThrow(() -> {
+                    log.error("no data for user '{}' found", userId);
+                    return new UserNotFoundException();
+                });
     }
 
     @Override
@@ -105,7 +113,7 @@ public class V1ApiController implements V1Api {
         return V1Api.super.updateUserByID(userId, updateUserRequest);
     }
 
-
+    //Done need testing for unhappy path
     @Override
     public ResponseEntity<UserAuthResponse> authorizeUserId(
             @Pattern(regexp = "^usr-[A-Za-z0-9]+$") @Parameter(name = "userId", description = "ID of the user", required = true, in = ParameterIn.PATH) @PathVariable("userId") String userId) {

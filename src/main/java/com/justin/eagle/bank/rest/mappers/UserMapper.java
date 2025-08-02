@@ -14,7 +14,7 @@ import jakarta.validation.Valid;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CreateNewUserMapper {
+public class UserMapper {
 
 
     public NewUser createNewUser(CreateUserRequest request) {
@@ -47,6 +47,29 @@ public class CreateNewUserMapper {
                 .email(createUserRequest.getEmail())
                 .name(createUserRequest.getName())
                 .updatedTimestamp(user.createdTimestamp())
+                .build();
+    }
+
+    public UserResponse buildUserResponse(ProvisionedUser user) {
+        return UserResponse.builder()
+                .id(user.externalUserId())
+                .createdTimestamp(user.createdTimestamp())
+                .address(buildAddress(user.user().address()))
+                .phoneNumber(user.user().profile().phoneNumber())
+                .email(user.user().profile().emailAddress())
+                .name(user.user().profile().name())
+                .updatedTimestamp(user.updatedTimestamp())
+                .build();
+    }
+
+    private CreateUserRequestAddress buildAddress(UserAddress address) {
+        return CreateUserRequestAddress.builder()
+                .county(address.county())
+                .town(address.town())
+                .postcode(address.postCode())
+                .line1(address.addressLines().get(0))
+                .line2(address.addressLines().get(1))
+                .line3(address.addressLines().get(2))
                 .build();
     }
 }
