@@ -84,7 +84,11 @@ public class CreateUserComponentTest extends BaseComponentTest {
         System.out.println("the user id is " + userId);
         System.out.println(createUserResponse);
 
-        final String fetchResult = mockMvc.perform(get("/v1/users/{userId}", userId))
+        final String bearerTokenForUser = getBearerTokenForUser(userId);
+
+        final String fetchResult = mockMvc.perform(get("/v1/users/{userId}", userId)
+                        .header("Authorization", bearerTokenForUser))
+                .andExpect(status().is(200))
                 .andReturn()
                 .getResponse().getContentAsString();
         System.out.println(fetchResult);
@@ -110,6 +114,9 @@ public class CreateUserComponentTest extends BaseComponentTest {
                 }
                 """;
     }
+
+
+
 
 
 

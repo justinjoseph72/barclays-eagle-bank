@@ -465,6 +465,12 @@ paths:
           schema:
             type: string
             pattern: ^usr-[A-Za-z0-9]+$
+        - name: Authorization
+          in: header
+          description: Bearer JWT
+          required: true
+          schema:
+            type: string
       security:
         - bearerAuth: []
       responses:

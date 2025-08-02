@@ -1,11 +1,17 @@
 package com.justin.eagle.bank.auth;
 
+import java.time.Instant;
 import java.util.Optional;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.justin.eagle.bank.dao.UserRepository;
 import com.justin.eagle.bank.dao.model.UserStatusDbInfo;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserAuthResponse;
 import com.justin.eagle.bank.utl.NowTimeSupplier;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +36,7 @@ public class AuthenticateUserServiceImpl implements AuthenticateUserService {
         return userStatusInfo
                 .filter(info -> {
                     final boolean equals = "ACTIVE".equals(info.status());
-                    if(!equals) {
+                    if (!equals) {
                         log.error("the user '{}' is not in ACTIVE state", userId);
                     }
                     return equals;
@@ -39,16 +45,46 @@ public class AuthenticateUserServiceImpl implements AuthenticateUserService {
                     log.info("found active user for id '{}", activeUser.userId());
                     return buildJwtService.buildJwt(userId);
                 })
-                .map(token -> UserAuthResponse.builder()
-                        .token(token)
-                        .userId(userId)
-                        .type("Bearer")
-                        .createdTimestamp(nowTimeSupplier.currentInstant())
-                        .build())
+                .map(token -> {
+                    log.info("successfully build token for userId '{}'",userId);
+                    return UserAuthResponse.builder()
+                            .token(token)
+                            .userId(userId)
+                            .type("Bearer")
+                            .createdTimestamp(nowTimeSupplier.currentInstant())
+                            .build();
+                })
                 .orElseThrow(() -> {
                     log.error("unable to generate token for user id '{}", userId);
                     return new TokenNotCreatedException();
                 });
 
+    }
+
+    @Override
+    public String authorizeRequest(@NotNull String userId, @NotNull String bearerToken) {
+        try {
+            final String jwtToken = bearerToken.replace("Bearer", "").strip();
+            final DecodedJWT decodedToken = JWT.decode(jwtToken);
+            final Instant tokeExpiresAt = decodedToken.getExpiresAt().toInstant();
+            final Instant now = nowTimeSupplier.currentInstant();
+            if (now.isAfter(tokeExpiresAt)) {
+                log.error("the provided token is expired at {}. current instant is{}", tokeExpiresAt.getEpochSecond(), now.getEpochSecond());
+                throw new UserNotAuthorizedException("token is expired");
+            }
+
+            return Optional.ofNullable(decodedToken.getClaims())
+                    .map(map -> map.get("sub"))
+                    .map(Claim::asString)
+                    .filter(userId::equals)
+                    .orElseThrow(() -> {
+                        log.error("the sub claim on the token does not match the provided user");
+                        return new UserNotAuthorizedException("sub claim and user does not match");
+                    });
+
+        } catch (JWTDecodeException decodeException) {
+            log.error("invalid JWT provided");
+            throw new UserNotAuthorizedException("invalid JWT provided");
+        }
     }
 }

@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.headers.Header;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,10 +82,15 @@ public class V1ApiController implements V1Api {
 
     //TODO check auth and error handling
     @Override
-    public ResponseEntity<UserResponse> fetchUserByID( @Pattern(regexp = "^usr-[A-Za-z0-9]+$")
-    @Parameter(name = "userId", description = "ID of the user", required = true, in = ParameterIn.PATH)
-    @PathVariable("userId") String userId) {
-        return userCrudService.fetchUser(userId)
+    public ResponseEntity<UserResponse> fetchUserByID(@Pattern(regexp = "^usr-[A-Za-z0-9]+$")
+            @Parameter(name = "userId", description = "ID of the user", required = true, in = ParameterIn.PATH)
+            @PathVariable("userId") String userId,
+            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
+            @RequestHeader(value = "Authorization", required = true) String authorization) {
+
+        final String authorizedUserId = authenticateUserService.authorizeRequest(userId, authorization);
+
+        return userCrudService.fetchUser(authorizedUserId)
                 .map(userMapper::buildUserResponse)
                 .map(userResponse -> new ResponseEntity<>(userResponse, HttpStatus.OK))
                 .orElseThrow(() -> {
