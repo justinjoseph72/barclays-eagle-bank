@@ -1,4 +1,4 @@
-package com.justin.eagle.bank.user.model;
+package com.justin.eagle.bank.domain;
 
 import java.time.Instant;
 import java.util.UUID;

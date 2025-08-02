@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.justin.eagle.bank.dao.model.UserStatusDbInfo;
-import com.justin.eagle.bank.user.model.ProvisionedUser;
+import com.justin.eagle.bank.domain.ProvisionedUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
@@ -108,11 +108,12 @@ public class UserRepository {
         }
     }
 
+    @Transactional(readOnly = true, isolation = REPEATABLE_READ)
     public Optional<ProvisionedUser> fetchLatestUserDetails(String userId) {
         var param = new MapSqlParameterSource();
         param.addValue("userId", userId);
         try {
-            return Optional.of(jdbcTemplate.queryForObject(FETCH_LATEST_PARTY_DETAILS_QUERY, param, userFetchRowMapper));
+            return Optional.ofNullable(jdbcTemplate.queryForObject(FETCH_LATEST_PARTY_DETAILS_QUERY, param, userFetchRowMapper));
 
         }catch (EmptyResultDataAccessException e) {
             log.info("no records found for user id '{}'", userId);

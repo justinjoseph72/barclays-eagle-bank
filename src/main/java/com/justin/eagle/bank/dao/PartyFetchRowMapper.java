@@ -4,15 +4,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import com.justin.eagle.bank.user.model.NewUser;
-import com.justin.eagle.bank.user.model.ProvisionedUser;
-import com.justin.eagle.bank.user.model.UserAddress;
-import com.justin.eagle.bank.user.model.UserProfile;
+import com.justin.eagle.bank.domain.NewUser;
+import com.justin.eagle.bank.domain.ProvisionedUser;
+import com.justin.eagle.bank.domain.UserAddress;
+import com.justin.eagle.bank.domain.UserProfile;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 

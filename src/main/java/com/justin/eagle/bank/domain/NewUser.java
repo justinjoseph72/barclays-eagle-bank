@@ -1,6 +1,4 @@
-package com.justin.eagle.bank.user.model;
-
-import java.util.UUID;
+package com.justin.eagle.bank.domain;
 
 import lombok.Builder;
 

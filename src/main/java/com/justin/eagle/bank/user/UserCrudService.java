@@ -2,8 +2,8 @@ package com.justin.eagle.bank.user;
 
 import java.util.Optional;
 
-import com.justin.eagle.bank.user.model.NewUser;
-import com.justin.eagle.bank.user.model.ProvisionedUser;
+import com.justin.eagle.bank.domain.NewUser;
+import com.justin.eagle.bank.domain.ProvisionedUser;
 
 public interface UserCrudService {
 

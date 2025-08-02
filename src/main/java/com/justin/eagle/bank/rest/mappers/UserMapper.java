@@ -6,10 +6,10 @@ import java.util.stream.Stream;
 import com.justin.eagle.bank.generated.openapi.rest.model.CreateUserRequest;
 import com.justin.eagle.bank.generated.openapi.rest.model.CreateUserRequestAddress;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserResponse;
-import com.justin.eagle.bank.user.model.NewUser;
-import com.justin.eagle.bank.user.model.ProvisionedUser;
-import com.justin.eagle.bank.user.model.UserAddress;
-import com.justin.eagle.bank.user.model.UserProfile;
+import com.justin.eagle.bank.domain.NewUser;
+import com.justin.eagle.bank.domain.ProvisionedUser;
+import com.justin.eagle.bank.domain.UserAddress;
+import com.justin.eagle.bank.domain.UserProfile;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Component;
 

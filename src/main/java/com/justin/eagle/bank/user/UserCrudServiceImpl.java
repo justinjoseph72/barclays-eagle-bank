@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.util.Optional;
 
 import com.justin.eagle.bank.dao.UserRepository;
-import com.justin.eagle.bank.user.model.NewUser;
-import com.justin.eagle.bank.user.model.ProvisionedUser;
+import com.justin.eagle.bank.domain.NewUser;
+import com.justin.eagle.bank.domain.ProvisionedUser;
 import com.justin.eagle.bank.utl.IdSupplier;
 import com.justin.eagle.bank.utl.NowTimeSupplier;
 import org.springframework.stereotype.Service;
