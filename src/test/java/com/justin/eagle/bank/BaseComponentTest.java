@@ -23,7 +23,46 @@ public class BaseComponentTest {
     protected MockMvc mockMvc;
 
 
-    protected String getBearerTokenForUser(String userId) throws Exception {
+    protected String provideCreateUserTemplate() {
+        return """
+                {
+                  "name": "replaceName",
+                  "address": {
+                    "line1": "replaceLine1",
+                    "line2": "replaceLine2",
+                    "line3": "replaceLine2",
+                    "town": "replaceTown",
+                    "county": "replaceCounty",
+                    "postcode": "replacePostcode"
+                  },
+                  "phoneNumber": "replacePhoneNumber",
+                  "email": "replaceEmail"
+                }
+                """;
+    }
+
+    protected String given_a_new_user_is_created() throws Exception {
+        String payload = provideCreateUserTemplate()
+                .replace("replaceName", "someNewName")
+                .replace("replaceTown", "someNewTown")
+                .replace("replaceCounty", "Essex")
+                .replace("replacePostcode", "SS3333")
+                .replace("replacePhoneNumber", "+44-134333434")
+                .replace("replaceEmail", "user1@something1.com");
+        final String createUserResponse = mockMvc.perform(post("/v1/users")
+                        .contentType("application/json")
+                        .content(payload)
+                )
+                .andExpect(status().is(201))
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andReturn()
+                .getResponse().getContentAsString();
+        final String userId = JsonPath.parse(createUserResponse).read("$.id").toString();
+        System.out.println("the user id is " + userId);
+        return userId;
+    }
+
+    protected String and_an_auth_token_is_generated_for_the_user(String userId) throws Exception {
         final String response = mockMvc.perform(post("/v1/users/{userId}/authorize", userId)
                         .contentType("application/json")
                 )

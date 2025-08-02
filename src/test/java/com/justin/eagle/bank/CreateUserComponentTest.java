@@ -7,20 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
-import com.justin.eagle.bank.matcher.JsonTimestampCustomization;
-import com.justin.eagle.bank.matcher.TimestampComparator;
-import com.justin.eagle.bank.matcher.TimestampValueMatcher;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
-import org.skyscreamer.jsonassert.Customization;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.skyscreamer.jsonassert.JSONCompareMode;
-import org.skyscreamer.jsonassert.RegularExpressionValueMatcher;
-import org.skyscreamer.jsonassert.ValueMatcher;
-import org.skyscreamer.jsonassert.comparator.CustomComparator;
-import org.springframework.test.json.JsonAssert;
 
 public class CreateUserComponentTest extends BaseComponentTest {
 
@@ -84,7 +72,7 @@ public class CreateUserComponentTest extends BaseComponentTest {
         System.out.println("the user id is " + userId);
         System.out.println(createUserResponse);
 
-        final String bearerTokenForUser = getBearerTokenForUser(userId);
+        final String bearerTokenForUser = and_an_auth_token_is_generated_for_the_user(userId);
 
         final String fetchResult = mockMvc.perform(get("/v1/users/{userId}", userId)
                         .header("Authorization", bearerTokenForUser))
@@ -97,23 +85,7 @@ public class CreateUserComponentTest extends BaseComponentTest {
 
     }
 
-    private String provideCreateUserTemplate() {
-        return """
-                {
-                  "name": "replaceName",
-                  "address": {
-                    "line1": "replaceLine1",
-                    "line2": "replaceLine2",
-                    "line3": "replaceLine2",
-                    "town": "replaceTown",
-                    "county": "replaceCounty",
-                    "postcode": "replacePostcode"
-                  },
-                  "phoneNumber": "replacePhoneNumber",
-                  "email": "replaceEmail"
-                }
-                """;
-    }
+
 
 
 
