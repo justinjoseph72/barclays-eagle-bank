@@ -22,6 +22,7 @@ public class BaseComponentTest {
     @Autowired
     protected MockMvc mockMvc;
 
+    protected String expiredToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c3Itc29tZVVzZXJJZCIsImlhdCI6MTc1NDA3ODA4NSwiZXhwIjoxNzU0MDc4Mzg1fQ.for0K8Jl9R5vgQmxsTMYJ4s0upxDOXf2PSUe7F4oYrkPMZ_Acrn3VMxHvMUvHeewyR3GzY9w0qt9mySc-BkpcQ";
 
     protected String provideCreateUserTemplate() {
         return """
@@ -78,4 +79,14 @@ public class BaseComponentTest {
         final String tokenType = JsonPath.parse(response).read("$.type").toString();
         return "%s %s".formatted(tokenType, jwtToken);
     }
+
+    protected String getNewAccountPayloadForAccountName(String name) {
+        String accountPayloadTemplate = """
+                { "name": "replaceName",
+                   "accountType": "personal"
+                }
+                """;
+        return accountPayloadTemplate.replace("replaceName", name);
+    }
+
 }
