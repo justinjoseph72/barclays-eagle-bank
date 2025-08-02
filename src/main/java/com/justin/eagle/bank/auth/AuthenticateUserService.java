@@ -7,4 +7,6 @@ public interface AuthenticateUserService {
     UserAuthResponse buildNewAuthToken(String userId);
 
    String authorizeRequest(String userId, String bearerToken);
+
+   String findUserIdFromAuthToken(String bearerToken);
 }

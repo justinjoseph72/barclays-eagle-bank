@@ -18,6 +18,13 @@ paths:
         - account
       description: Create a new bank account
       operationId: createAccount
+      parameters:
+        - name: Authorization
+          in: header
+          description: Bearer JWT
+          required: true
+          schema:
+            type: string
       security:
         - bearerAuth: []
       requestBody:

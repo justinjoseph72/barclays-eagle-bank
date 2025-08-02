@@ -1,6 +1,9 @@
 package com.justin.eagle.bank.rest.controller;
 
+import com.justin.eagle.bank.account.AccountCrudService;
 import com.justin.eagle.bank.auth.AuthenticateUserService;
+import com.justin.eagle.bank.domain.ActiveAccount;
+import com.justin.eagle.bank.domain.PendingAccount;
 import com.justin.eagle.bank.generated.openapi.rest.api.V1Api;
 import com.justin.eagle.bank.generated.openapi.rest.model.BankAccountResponse;
 import com.justin.eagle.bank.generated.openapi.rest.model.CreateBankAccountRequest;
@@ -13,6 +16,7 @@ import com.justin.eagle.bank.generated.openapi.rest.model.UpdateBankAccountReque
 import com.justin.eagle.bank.generated.openapi.rest.model.UpdateUserRequest;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserAuthResponse;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserResponse;
+import com.justin.eagle.bank.rest.mappers.AccountMapper;
 import com.justin.eagle.bank.rest.mappers.UserMapper;
 import com.justin.eagle.bank.user.UserCrudService;
 import com.justin.eagle.bank.domain.ProvisionedUser;
@@ -39,11 +43,25 @@ public class V1ApiController implements V1Api {
 
     @Autowired UserCrudService userCrudService;
 
+    @Autowired AccountCrudService accountCrudService;
+
     @Autowired UserMapper userMapper;
 
+    @Autowired AccountMapper accountMapper;
+
     @Override
-    public ResponseEntity<BankAccountResponse> createAccount(CreateBankAccountRequest createBankAccountRequest) {
-        return V1Api.super.createAccount(createBankAccountRequest);
+    public ResponseEntity<BankAccountResponse> createAccount(
+            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
+            @RequestHeader(value = "Authorization", required = true) String authorization,
+            @Parameter(name = "CreateBankAccountRequest", description = "Create a new bank account for the user", required = true) @Valid @RequestBody CreateBankAccountRequest createBankAccountRequest
+    ) {
+        final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
+
+        PendingAccount pendingAccount = accountMapper.buildPendingAccount(authorizedUserId, createBankAccountRequest);
+
+        final ActiveAccount newAccount = accountCrudService.createNewAccount(pendingAccount);
+
+        return new ResponseEntity<>(accountMapper.buildAccountResponse(newAccount), HttpStatus.CREATED);
     }
 
     @Override

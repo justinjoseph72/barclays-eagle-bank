@@ -105,6 +105,8 @@ public class UserRepository {
         } catch (EmptyResultDataAccessException e) {
             log.info("no records found for user id '{}'", userId);
             return Optional.empty();
+        } catch (Exception e) {
+            throw new DatabaseInteractionException(e);
         }
     }
 

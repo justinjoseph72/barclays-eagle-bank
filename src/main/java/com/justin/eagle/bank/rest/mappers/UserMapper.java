@@ -16,10 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserMapper {
 
-
     public NewUser createNewUser(CreateUserRequest request) {
-
-
         final CreateUserRequestAddress address = request.getAddress();
         return NewUser.builder()
                 .profile(UserProfile.builder()
@@ -31,7 +28,7 @@ public class UserMapper {
                         .town(address.getTown())
                         .county(address.getCounty())
                         .postCode(address.getPostcode())
-                        .addressLines(Stream.of(address.getLine1(),address.getLine2(), address.getLine3())
+                        .addressLines(Stream.of(address.getLine1(), address.getLine2(), address.getLine3())
                                 .filter(Objects::nonNull)
                                 .toList())
                         .build())

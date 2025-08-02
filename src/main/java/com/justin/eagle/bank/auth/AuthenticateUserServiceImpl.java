@@ -2,6 +2,7 @@ package com.justin.eagle.bank.auth;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
@@ -64,27 +65,60 @@ public class AuthenticateUserServiceImpl implements AuthenticateUserService {
     @Override
     public String authorizeRequest(@NotNull String userId, @NotNull String bearerToken) {
         try {
-            final String jwtToken = bearerToken.replace("Bearer", "").strip();
-            final DecodedJWT decodedToken = JWT.decode(jwtToken);
-            final Instant tokeExpiresAt = decodedToken.getExpiresAt().toInstant();
-            final Instant now = nowTimeSupplier.currentInstant();
-            if (now.isAfter(tokeExpiresAt)) {
-                log.error("the provided token is expired at {}. current instant is{}", tokeExpiresAt.getEpochSecond(), now.getEpochSecond());
-                throw new UserNotAuthorizedException("token is expired");
-            }
+            final DecodedJWT decodedToken = getDecodedJWT(bearerToken);
+            validateTokenIsNotExpired(decodedToken);
 
             return Optional.ofNullable(decodedToken.getClaims())
                     .map(map -> map.get("sub"))
                     .map(Claim::asString)
                     .filter(userId::equals)
-                    .orElseThrow(() -> {
-                        log.error("the sub claim on the token does not match the provided user");
-                        return new UserNotAuthorizedException("sub claim and user does not match");
-                    });
+                    .orElseThrow(getUserNotAuthorizedExceptionSupplier());
 
         } catch (JWTDecodeException decodeException) {
-            log.error("invalid JWT provided");
+            log.error("invalid JWT provided", decodeException);
             throw new UserNotAuthorizedException("invalid JWT provided");
         }
     }
+
+
+
+    @Override
+    public String findUserIdFromAuthToken(String bearerToken) {
+        try {
+            final DecodedJWT decodedToken = getDecodedJWT(bearerToken);
+            validateTokenIsNotExpired(decodedToken);
+
+            return Optional.ofNullable(decodedToken.getClaims())
+                    .map(map -> map.get("sub"))
+                    .map(Claim::asString)
+                    .orElseThrow(getUserNotAuthorizedExceptionSupplier());
+
+        } catch (JWTDecodeException decodeException) {
+            log.error("invalid JWT provided", decodeException);
+            throw new UserNotAuthorizedException("invalid JWT provided");
+        }
+    }
+
+    private static DecodedJWT getDecodedJWT(String bearerToken) {
+        final String jwtToken = bearerToken.replace("Bearer", "").strip();
+        return JWT.decode(jwtToken);
+    }
+
+    private void validateTokenIsNotExpired(DecodedJWT decodedToken) {
+        final Instant tokeExpiresAt = decodedToken.getExpiresAt().toInstant();
+        final Instant now = nowTimeSupplier.currentInstant();
+        if (now.isAfter(tokeExpiresAt)) {
+            log.error("the provided token is expired at {}. current instant is{}", tokeExpiresAt.getEpochSecond(), now.getEpochSecond());
+            throw new UserNotAuthorizedException("token is expired");
+        }
+    }
+
+    private Supplier<UserNotAuthorizedException> getUserNotAuthorizedExceptionSupplier() {
+        return () -> {
+            log.error("the sub claim on the token does not match the provided user");
+            return new UserNotAuthorizedException("sub claim and user does not match");
+        };
+    }
+
+
 }

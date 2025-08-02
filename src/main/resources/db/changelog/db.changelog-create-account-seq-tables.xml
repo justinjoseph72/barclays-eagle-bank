@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  
+  <changeSet id="db.changelog-create-account-seq" author="justin.joseph">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <sequenceExists sequenceName="account_number_seq" />
+      </not>
+    </preConditions>
+    <createSequence sequenceName="account_number_seq" incrementBy="1" dataType="bigint" startValue="1"/>
+  
+  </changeSet>
+  
+  <changeSet id="create-account-table" author="justin.joseph">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <tableExists tableName="account"/>
+      </not>
+    </preConditions>
+    <createTable tableName="account">
+      <column name="id" type="uuid">
+        <constraints nullable="false" primaryKey="true" primaryKeyName="account_pk"/>
+      </column>
+      <column name="account_number" type="varchar(8)">
+        <constraints nullable="false" primaryKey="true" primaryKeyName="account_pk"/>
+      </column>
+      <column name="sort_code" type="varchar(8)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="party_id" type="uuid" >
+        <constraints nullable="false" />
+      </column>
+      <column name="status" type="varchar(15)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="type" type="varchar(15)">
+        <constraints nullable="false" />
+      </column>
+      <column name="name" type="varchar(50)">
+        <constraints nullable="false" />
+      </column>
+      <column name="record_creation_timestamp" type="timestamp without time zone">
+        <constraints nullable="false" primaryKey="true" primaryKeyName="account_pk"/>
+      </column>
+      
+    </createTable>
+  </changeSet>
+  
+  <changeSet id="create-balance-table" author="justin.joseph">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <tableExists tableName="balance"/>
+      </not>
+    </preConditions>
+    <createTable tableName="balance">
+      <column name="account_id" type="uuid">
+        <constraints nullable="false" primaryKey="true" primaryKeyName="balance_pk"/>
+      </column>
+      <column name="currency" type="varchar(3)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="amount" type="numeric(15,2)">
+        <constraints nullable="false" />
+      </column>
+      <column name="record_timestamp" type="timestamp without time zone">
+        <constraints nullable="false"/>
+      </column>
+    
+    </createTable>
+  </changeSet>
+  
+
+</databaseChangeLog>
