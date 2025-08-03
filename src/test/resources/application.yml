@@ -9,7 +9,7 @@ spring:
     password: "${db.password}"
     hikari:
       poolName: BankDbHikariCp
-#      transaction-isolation:  TRANSACTION_READ_COMMITED
+      transaction-isolation:  TRANSACTION_READ_COMMITTED
       autocommit: false
       maximumPoolSize: 10
       data-source-properties:
