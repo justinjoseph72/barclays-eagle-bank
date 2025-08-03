@@ -5,9 +5,9 @@ import java.util.UUID;
 import lombok.Builder;
 
 @Builder
-public record ActiveAccount(UUID id, UUID partyId,
+public record ActiveAccount( UUID partyId,
                             AccountIdentifier identifier,
-                            Balance currentBalance,
+                            Amount currentBalance,
                             AuditData auditData,
                             String name, String type) implements Account {
 }

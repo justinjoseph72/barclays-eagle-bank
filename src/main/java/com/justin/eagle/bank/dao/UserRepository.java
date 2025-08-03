@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import com.justin.eagle.bank.dao.model.UserStatusDbInfo;
 import com.justin.eagle.bank.domain.ProvisionedUser;
+import com.justin.eagle.bank.domain.UserIdentifier;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
@@ -49,7 +50,9 @@ public class UserRepository {
                 from party_profile pp join latest_party lp on lp.id = pp.party_id order by record_creation_timestamp desc limit 1),
                 latest_address as (select line1, line2,line3, county,town,postcode, record_creation_timestamp as address_update_timestamp
                 from party_address pa join latest_party lp on lp.id = pa.party_id order by record_creation_timestamp desc limit 1)
-                select latest_party.*, latest_profile.*,latest_address.* from latest_party,latest_profile,latest_address
+                select latest_party.*, latest_profile.*,latest_address.*,
+                 greatest(party_update_timestamp,profile_update_timestamp,address_update_timestamp) as last_updated_timestamp
+                 from latest_party,latest_profile,latest_address
                 """;
     private final RowMapper<ProvisionedUser> userFetchRowMapper;
 
@@ -62,31 +65,32 @@ public class UserRepository {
     public void saveUser(ProvisionedUser user) {
 
         var param = new MapSqlParameterSource();
-        param.addValue("id", user.userId());
-        param.addValue("externalId", user.externalUserId());
+        final UserIdentifier identifier = user.identifier();
+        param.addValue("id", identifier.partyId());
+        param.addValue("externalId", identifier.externalUserId());
         param.addValue("status", "ACTIVE");
-        param.addValue("recordCreationTimestamp", Timestamp.from(user.createdTimestamp()), Types.TIMESTAMP);
+        param.addValue("recordCreationTimestamp", Timestamp.from(user.auditData().createdTimestamp()), Types.TIMESTAMP);
         jdbcTemplate.update(INSERT_USER_SQL, param);
 
         var profileParam = new MapSqlParameterSource();
-        profileParam.addValue("partyId", user.userId());
-        profileParam.addValue("name", user.user().profile().name());
-        profileParam.addValue("phoneNumber", user.user().profile().phoneNumber());
-        profileParam.addValue("email", user.user().profile().emailAddress());
-        profileParam.addValue("recordCreationTimestamp", Timestamp.from(user.createdTimestamp()), Types.TIMESTAMP);
+        profileParam.addValue("partyId", identifier.partyId());
+        profileParam.addValue("name", user.info().profile().name());
+        profileParam.addValue("phoneNumber", user.info().profile().phoneNumber());
+        profileParam.addValue("email", user.info().profile().emailAddress());
+        profileParam.addValue("recordCreationTimestamp", Timestamp.from(user.auditData().createdTimestamp()), Types.TIMESTAMP);
 
         jdbcTemplate.update(INSERT_PROFILE_SQL, profileParam);
 
         var addressParam = new MapSqlParameterSource();
-        addressParam.addValue("partyId", user.userId());
-        addressParam.addValue("line1", user.user().address().addressLines().get(0));
-        addressParam.addValue("line2", user.user().address().addressLines().get(1));
-        addressParam.addValue("line3", user.user().address().addressLines().get(2));
+        addressParam.addValue("partyId", identifier.partyId());
+        addressParam.addValue("line1", user.info().address().addressLines().get(0));
+        addressParam.addValue("line2", user.info().address().addressLines().get(1));
+        addressParam.addValue("line3", user.info().address().addressLines().get(2));
 
-        addressParam.addValue("town", user.user().address().town());
-        addressParam.addValue("county", user.user().address().county());
-        addressParam.addValue("postcode", user.user().address().postCode());
-        addressParam.addValue("recordCreationTimestamp", Timestamp.from(user.createdTimestamp()), Types.TIMESTAMP);
+        addressParam.addValue("town", user.info().address().town());
+        addressParam.addValue("county", user.info().address().county());
+        addressParam.addValue("postcode", user.info().address().postCode());
+        addressParam.addValue("recordCreationTimestamp", Timestamp.from(user.auditData().createdTimestamp()), Types.TIMESTAMP);
         jdbcTemplate.update(INSERT_ADDRESS_SQL, addressParam);
     }
 

@@ -12,7 +12,6 @@ import java.util.regex.Pattern;
 import com.justin.eagle.bank.domain.ActiveAccount;
 import com.justin.eagle.bank.utl.IdSupplier;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -83,7 +82,7 @@ public class AccountRepository {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void persistNewAccount(ActiveAccount activeAccount) {
         var param = new MapSqlParameterSource();
-        param.addValue("id", activeAccount.id());
+        param.addValue("id", activeAccount.identifier().id());
         param.addValue("accountNumber", activeAccount.identifier().accountNumber());
         param.addValue("sortCode", activeAccount.identifier().sortCode());
         param.addValue("partyId", activeAccount.partyId());
@@ -95,7 +94,7 @@ public class AccountRepository {
         jdbcTemplate.update(INSERT_ACCOUNT_RECORD, param);
 
         var balanceParam = new MapSqlParameterSource();
-        balanceParam.addValue("accountId", activeAccount.id());
+        balanceParam.addValue("accountId", activeAccount.identifier().id());
         balanceParam.addValue("currency", activeAccount.currentBalance().currency());
         balanceParam.addValue("amount", activeAccount.currentBalance().amount());
         balanceParam.addValue("recordTimestamp", Timestamp.from(activeAccount.auditData().createdTimestamp()), Types.TIMESTAMP);

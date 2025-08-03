@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 import com.justin.eagle.bank.generated.openapi.rest.model.CreateUserRequest;
 import com.justin.eagle.bank.generated.openapi.rest.model.CreateUserRequestAddress;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserResponse;
-import com.justin.eagle.bank.domain.NewUser;
+import com.justin.eagle.bank.domain.UserInfo;
 import com.justin.eagle.bank.domain.ProvisionedUser;
 import com.justin.eagle.bank.domain.UserAddress;
 import com.justin.eagle.bank.domain.UserProfile;
@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserMapper {
 
-    public NewUser createNewUser(CreateUserRequest request) {
+    public UserInfo createNewUser(CreateUserRequest request) {
         final CreateUserRequestAddress address = request.getAddress();
-        return NewUser.builder()
+        return UserInfo.builder()
                 .profile(UserProfile.builder()
                         .name(request.getName())
                         .emailAddress(request.getEmail())
@@ -37,25 +37,25 @@ public class UserMapper {
 
     public UserResponse createUserResponse(ProvisionedUser user, @Valid CreateUserRequest createUserRequest) {
         return UserResponse.builder()
-                .id(user.externalUserId())
-                .createdTimestamp(user.createdTimestamp())
+                .id(user.identifier().externalUserId())
+                .createdTimestamp(user.auditData().createdTimestamp())
                 .address(createUserRequest.getAddress())
                 .phoneNumber(createUserRequest.getPhoneNumber())
                 .email(createUserRequest.getEmail())
                 .name(createUserRequest.getName())
-                .updatedTimestamp(user.createdTimestamp())
+                .updatedTimestamp(user.auditData().createdTimestamp())
                 .build();
     }
 
     public UserResponse buildUserResponse(ProvisionedUser user) {
         return UserResponse.builder()
-                .id(user.externalUserId())
-                .createdTimestamp(user.createdTimestamp())
-                .address(buildAddress(user.user().address()))
-                .phoneNumber(user.user().profile().phoneNumber())
-                .email(user.user().profile().emailAddress())
-                .name(user.user().profile().name())
-                .updatedTimestamp(user.updatedTimestamp())
+                .id(user.identifier().externalUserId())
+                .createdTimestamp(user.auditData().createdTimestamp())
+                .address(buildAddress(user.info().address()))
+                .phoneNumber(user.info().profile().phoneNumber())
+                .email(user.info().profile().emailAddress())
+                .name(user.info().profile().name())
+                .updatedTimestamp(user.auditData().lastUpdatedTimestamp())
                 .build();
     }
 

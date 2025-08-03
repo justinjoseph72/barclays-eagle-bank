@@ -10,7 +10,7 @@ import com.justin.eagle.bank.dao.AccountRepository;
 import com.justin.eagle.bank.domain.AccountIdentifier;
 import com.justin.eagle.bank.domain.ActiveAccount;
 import com.justin.eagle.bank.domain.AuditData;
-import com.justin.eagle.bank.domain.Balance;
+import com.justin.eagle.bank.domain.Amount;
 import com.justin.eagle.bank.domain.PendingAccount;
 import com.justin.eagle.bank.dao.UserRepository;
 import com.justin.eagle.bank.dao.model.UserStatusDbInfo;
@@ -44,15 +44,15 @@ class AccountCrudServiceImpl implements AccountCrudService {
         Instant now = nowTimeSupplier.currentInstant();
         final ActiveAccount activeAccount = ActiveAccount
                 .builder()
-                .id(idSupplier.getNewId())
                 .partyId(partyId)
                 .name(accountDetails.name())
                 .type(accountDetails.type())
                 .identifier(AccountIdentifier.builder()
+                        .id(idSupplier.getNewId())
                         .accountNumber(newAccountNumber)
                         .sortCode("10-10-10")
                         .build())
-                .currentBalance(Balance.builder()
+                .currentBalance(Amount.builder()
                         .currency("GBP")
                         .amount(BigDecimal.ZERO)
                         .build())

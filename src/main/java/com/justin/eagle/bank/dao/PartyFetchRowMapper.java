@@ -8,7 +8,9 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import com.justin.eagle.bank.domain.NewUser;
+import com.justin.eagle.bank.domain.AuditData;
+import com.justin.eagle.bank.domain.UserIdentifier;
+import com.justin.eagle.bank.domain.UserInfo;
 import com.justin.eagle.bank.domain.ProvisionedUser;
 import com.justin.eagle.bank.domain.UserAddress;
 import com.justin.eagle.bank.domain.UserProfile;
@@ -20,17 +22,16 @@ class PartyFetchRowMapper implements RowMapper<ProvisionedUser> {
 
     @Override
     public ProvisionedUser mapRow(ResultSet rs, int rowNum) throws SQLException {
-        final Instant lastUpdatedTimestamp = Stream.of(rs.getTimestamp("party_update_timestamp"), rs.getTimestamp("profile_update_timestamp"),
-                        rs.getTimestamp("address_update_timestamp"))
-                .filter(Objects::nonNull)
-                .map(Timestamp::toInstant)
-                .max(Instant::compareTo).orElse(null);
         return ProvisionedUser.builder()
-                .userId(UUID.fromString(rs.getString("id")))
-                .externalUserId(rs.getString("external_id"))
-                .createdTimestamp(rs.getTimestamp("party_creation_timestamp").toInstant())
-                .updatedTimestamp(lastUpdatedTimestamp)
-                .user(NewUser.builder()
+                .identifier(UserIdentifier.builder()
+                        .partyId(UUID.fromString(rs.getString("id")))
+                        .externalUserId(rs.getString("external_id"))
+                        .build())
+                .auditData(AuditData.builder()
+                        .createdTimestamp(rs.getTimestamp("party_creation_timestamp").toInstant())
+                        .lastUpdatedTimestamp(rs.getTimestamp("last_updated_timestamp").toInstant())
+                        .build())
+                .info(UserInfo.builder()
                         .profile(UserProfile.builder()
                                 .name(rs.getString("name"))
                                 .phoneNumber(rs.getString("phone_number"))

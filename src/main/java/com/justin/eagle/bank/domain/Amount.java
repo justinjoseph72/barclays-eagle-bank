@@ -5,5 +5,5 @@ import java.math.BigDecimal;
 import lombok.Builder;
 
 @Builder
-public record Balance(String currency, BigDecimal amount) {
+public record Amount(String currency, BigDecimal amount) {
 }
