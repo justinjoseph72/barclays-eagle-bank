@@ -21,4 +21,8 @@ public class IdSupplier {
         final String accountSuffix = StringUtils.leftPad(value.toString(), 6, "0");
         return "01" + accountSuffix;
     }
+
+    public String newTransactionId() {
+        return "%s-%s".formatted("tan", getNewId().toString().replace("-", ""));
+    }
 }

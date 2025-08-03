@@ -1,4 +1,11 @@
 package com.justin.eagle.bank.domain;
 
-public record TransactionRequest() implements Transaction {
+import com.justin.eagle.bank.transaction.model.TransactionType;
+import lombok.Builder;
+
+@Builder
+public record TransactionRequest(String userId, String accountNumber, String reference, TransactionType type, Amount amount)  {
+
+
+    ApprovedTransaction approve(User)
 }

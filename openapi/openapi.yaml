@@ -279,6 +279,12 @@ paths:
           schema:
             type: string
             pattern: ^01\d{6}$
+        - name: Authorization
+          in: header
+          description: Bearer JWT
+          required: true
+          schema:
+            type: string
       requestBody:
         description: Create a new transaction
         content:

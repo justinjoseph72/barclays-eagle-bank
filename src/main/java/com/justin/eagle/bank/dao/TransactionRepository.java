@@ -2,12 +2,16 @@ package com.justin.eagle.bank.dao;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
+import com.justin.eagle.bank.dao.model.UserAccountBalanceInfo;
 import com.justin.eagle.bank.domain.ApprovedTransaction;
 import com.justin.eagle.bank.domain.CreditTransaction;
 import com.justin.eagle.bank.domain.DebitTransaction;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -21,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TransactionRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final UserAccountBalanceInfoRowMapper usrAccountBalanceInfoRowMapper;
 
     private static final String LOCK_BALANCE_FOR_ACCOUNT = """
             select * from balance where account_id = :accountId for update nowait
@@ -28,20 +33,29 @@ public class TransactionRepository {
 
     private static final String INSERT_TRANSACTION_LOG =
             """
-            insert into transaction_log (
-            id,transaction_id,is_credit,reference,party_id,account_id,status,currency,amount,running_balance,record_creation_timestamp)
-            values (:id,:transactionId,:isCredit,:reference,:partyId,:accountId,:status,:currency,:amount,:runningBalance,:recordCreationTimestamp)""";
+                    insert into transaction_log (
+                    id,transaction_id,is_credit,reference,party_id,account_id,status,currency,amount,running_balance,record_creation_timestamp)
+                    values (:id,:transactionId,:isCredit,:reference,:partyId,:accountId,:status,:currency,:amount,:runningBalance,:recordCreationTimestamp)""";
 
     private static final String UPDATE_BALANCE_CREDIT = """
-            update balance set amount = amount + :transactionAmount where account_id = :accountId
+            update balance set amount = amount + :transactionAmount,
+             where account_id = :accountId
              returning amount as updatedAmount""";
 
     private static final String UPDATE_BALANCE_DEBIT = """
             update balance set amount = amount - :transactionAmount where account_id = :accountId
             and amount >= :transactionAmount returning amount as updatedAmount""";
+    private static final String FETCH_USER_ACCOUNT_DETAIL_SQL = """
+            with latest_user_info as (select id as party_id, external_id, status as party_status
+             from party where external_id = :userId order by record_creation_timestamp desc limit 1),
+            latest_user_account_info as (select lui.*, a.id as account_id, a,account_number, a.status as account_status from account a join
+             latest_user_info lui on lui.party_id = a.party_id where account_number = :accountNumber order by a.record_creation_timestamp desc limit 1)
+             select luai.*, b.amount,b.currency from latest_user_account_info luai join balance b on luai.account_id = b.account_id
+            """;
 
-    public TransactionRepository(NamedParameterJdbcTemplate jdbcTemplate) {
+    public TransactionRepository(NamedParameterJdbcTemplate jdbcTemplate, UserAccountBalanceInfoRowMapper usrAccountBalanceInfoRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
+        this.usrAccountBalanceInfoRowMapper = usrAccountBalanceInfoRowMapper;
     }
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -54,7 +68,6 @@ public class TransactionRepository {
 
         var updateBalanceParam = new MapSqlParameterSource();
         final KeyHolder keyHolder = new GeneratedKeyHolder();
-
 
         record TransactionSupport(String sql, Boolean creditDebitIndicator) {}
 
@@ -89,5 +102,20 @@ public class TransactionRepository {
 
         jdbcTemplate.update(INSERT_TRANSACTION_LOG, transactionLogParam);
 
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
+    public Optional<UserAccountBalanceInfo> fetchLatestStatusForUserAndAccount(String userId, String accountNumber) {
+        var param = new MapSqlParameterSource();
+        param.addValue("userId", userId);
+        param.addValue("accountNumber", accountNumber);
+
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(FETCH_USER_ACCOUNT_DETAIL_SQL, param, usrAccountBalanceInfoRowMapper));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        } catch (Exception e) {
+            throw new DatabaseInteractionException(e);
+        }
     }
 }

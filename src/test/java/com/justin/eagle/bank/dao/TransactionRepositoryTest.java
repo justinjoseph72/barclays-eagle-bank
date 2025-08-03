@@ -29,9 +29,10 @@ import org.springframework.jdbc.support.KeyHolder;
 class TransactionRepositoryTest {
 
     private final NamedParameterJdbcTemplate jdbcTemplate = Mockito.mock(NamedParameterJdbcTemplate.class);
+    private final UserAccountBalanceInfoRowMapper rowMapper = Mockito.mock(UserAccountBalanceInfoRowMapper.class);
     private final KeyHolder keyHolder = Mockito.mock(KeyHolder.class);
 
-    private final TransactionRepository repository = new TransactionRepository(jdbcTemplate);
+    private final TransactionRepository repository = new TransactionRepository(jdbcTemplate, rowMapper);
 
     @Captor ArgumentCaptor<String> updateSqlCaptor;
     @Captor ArgumentCaptor<String> insertLogSqlCaptor;
@@ -47,18 +48,16 @@ class TransactionRepositoryTest {
 
         Mockito.when(jdbcTemplate.update(lockSqlCaptor.capture(), lockParamCapture.capture())).thenReturn(1);
 
-
         Mockito.when(jdbcTemplate.update(updateSqlCaptor.capture(), updateBalanceParamCapture.capture(), keyHolderCaptor.capture()))
                 .thenAnswer(invocationOnMock -> {
                     Object[] args = invocationOnMock.getArguments();
                     Map<String, Object> keyMap = new HashMap<String, Object>();
                     keyMap.put("updatedAmount", "343.44");
-                    ((GeneratedKeyHolder)args[2]).getKeyList().add(keyMap);
+                    ((GeneratedKeyHolder) args[2]).getKeyList().add(keyMap);
                     return 1;
                 });
 
         Mockito.when(jdbcTemplate.update(insertLogSqlCaptor.capture(), insertParamCapture.capture())).thenReturn(1);
-
 
         repository.updateBalanceForTransaction(creditTransaction);
 
@@ -71,14 +70,11 @@ class TransactionRepositoryTest {
         Assertions.assertThat(insertParams.getValue("isCredit")).isEqualTo(Boolean.TRUE);
     }
 
-
-
     @Test
     void verifyDebitTransactionSucceedWhenThereIsNoErrorInBalanceUpdate() {
         final DebitTransaction debitTransaction = getDebitTransaction();
 
         Mockito.when(jdbcTemplate.update(lockSqlCaptor.capture(), lockParamCapture.capture())).thenReturn(1);
-
 
         Mockito.when(jdbcTemplate.update(updateSqlCaptor.capture(), updateBalanceParamCapture.capture(), keyHolderCaptor.capture()))
                 .thenAnswer(invocationOnMock -> {
@@ -91,7 +87,6 @@ class TransactionRepositoryTest {
 
         Mockito.when(jdbcTemplate.update(insertLogSqlCaptor.capture(), insertParamCapture.capture())).thenReturn(1);
 
-
         repository.updateBalanceForTransaction(debitTransaction);
 
         final String updateSql = updateSqlCaptor.getValue();
@@ -103,20 +98,18 @@ class TransactionRepositoryTest {
         Assertions.assertThat(insertParams.getValue("isCredit")).isEqualTo(Boolean.FALSE);
     }
 
-
     @Test
     void verifyDebitTransactionFailsWhenBalanceUpdateFails() {
         final DebitTransaction debitTransaction = getDebitTransaction();
 
         Mockito.when(jdbcTemplate.update(lockSqlCaptor.capture(), lockParamCapture.capture())).thenReturn(1);
 
-
         Mockito.when(jdbcTemplate.update(updateSqlCaptor.capture(), updateBalanceParamCapture.capture(), keyHolderCaptor.capture()))
                 .thenAnswer(invocationOnMock -> {
                     Object[] args = invocationOnMock.getArguments();
                     Map<String, Object> keyMap = new HashMap<String, Object>();
                     keyMap.put("updatedAmount", "343.44");
-                    ((GeneratedKeyHolder)args[2]).getKeyList().add(keyMap);
+                    ((GeneratedKeyHolder) args[2]).getKeyList().add(keyMap);
                     return 0;
                 });
 

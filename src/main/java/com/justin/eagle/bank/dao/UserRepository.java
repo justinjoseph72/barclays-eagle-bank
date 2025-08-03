@@ -43,17 +43,17 @@ public class UserRepository {
             """;
 
     private static final String FETCH_LATEST_PARTY_DETAILS_QUERY = """
-                with latest_party as (select id, external_id,status, record_creation_timestamp as party_update_timestamp,
-                 min(record_creation_timestamp) over (partition by id) as party_creation_timestamp from party
-                where external_id = :userId order by record_creation_timestamp desc limit 1),
-                latest_profile as (select name, phone_number, email, record_creation_timestamp as profile_update_timestamp
-                from party_profile pp join latest_party lp on lp.id = pp.party_id order by record_creation_timestamp desc limit 1),
-                latest_address as (select line1, line2,line3, county,town,postcode, record_creation_timestamp as address_update_timestamp
-                from party_address pa join latest_party lp on lp.id = pa.party_id order by record_creation_timestamp desc limit 1)
-                select latest_party.*, latest_profile.*,latest_address.*,
-                 greatest(party_update_timestamp,profile_update_timestamp,address_update_timestamp) as last_updated_timestamp
-                 from latest_party,latest_profile,latest_address
-                """;
+            with latest_party as (select id, external_id,status, record_creation_timestamp as party_update_timestamp,
+             min(record_creation_timestamp) over (partition by id) as party_creation_timestamp from party
+            where external_id = :userId order by record_creation_timestamp desc limit 1),
+            latest_profile as (select name, phone_number, email, record_creation_timestamp as profile_update_timestamp
+            from party_profile pp join latest_party lp on lp.id = pp.party_id order by record_creation_timestamp desc limit 1),
+            latest_address as (select line1, line2,line3, county,town,postcode, record_creation_timestamp as address_update_timestamp
+            from party_address pa join latest_party lp on lp.id = pa.party_id order by record_creation_timestamp desc limit 1)
+            select latest_party.*, latest_profile.*,latest_address.*,
+             greatest(party_update_timestamp,profile_update_timestamp,address_update_timestamp) as last_updated_timestamp
+             from latest_party,latest_profile,latest_address
+            """;
     private final RowMapper<ProvisionedUser> userFetchRowMapper;
 
     public UserRepository(NamedParameterJdbcTemplate jdbcTemplate, RowMapper<ProvisionedUser> userFetchRowMapper) {
@@ -99,13 +99,12 @@ public class UserRepository {
         var param = new MapSqlParameterSource();
         param.addValue("userId", userId);
         try {
-            return jdbcTemplate.queryForObject(GET_USER_STATUS_QUERY, param, (rs, rowNum) -> {
-                return Optional.of(UserStatusDbInfo.builder()
-                        .partyId(UUID.fromString(rs.getString("id")))
-                        .userId(rs.getString("external_id"))
-                        .status(rs.getString("status"))
-                        .build());
-            });
+            return jdbcTemplate.queryForObject(GET_USER_STATUS_QUERY, param,
+                    (rs, rowNum) -> Optional.of(UserStatusDbInfo.builder()
+                            .partyId(UUID.fromString(rs.getString("id")))
+                            .userId(rs.getString("external_id"))
+                            .status(rs.getString("status"))
+                            .build()));
         } catch (EmptyResultDataAccessException e) {
             log.info("no records found for user id '{}'", userId);
             return Optional.empty();
@@ -121,7 +120,7 @@ public class UserRepository {
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(FETCH_LATEST_PARTY_DETAILS_QUERY, param, userFetchRowMapper));
 
-        }catch (EmptyResultDataAccessException e) {
+        } catch (EmptyResultDataAccessException e) {
             log.info("no records found for user id '{}'", userId);
             return Optional.empty();
         }

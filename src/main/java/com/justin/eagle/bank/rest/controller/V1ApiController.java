@@ -5,7 +5,10 @@ import java.util.List;
 import com.justin.eagle.bank.account.AccountCrudService;
 import com.justin.eagle.bank.auth.AuthenticateUserService;
 import com.justin.eagle.bank.domain.ActiveAccount;
+import com.justin.eagle.bank.domain.ApprovedTransaction;
 import com.justin.eagle.bank.domain.PendingAccount;
+import com.justin.eagle.bank.domain.Transaction;
+import com.justin.eagle.bank.domain.TransactionRequest;
 import com.justin.eagle.bank.generated.openapi.rest.api.V1Api;
 import com.justin.eagle.bank.generated.openapi.rest.model.BankAccountResponse;
 import com.justin.eagle.bank.generated.openapi.rest.model.CreateBankAccountRequest;
@@ -19,7 +22,9 @@ import com.justin.eagle.bank.generated.openapi.rest.model.UpdateUserRequest;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserAuthResponse;
 import com.justin.eagle.bank.generated.openapi.rest.model.UserResponse;
 import com.justin.eagle.bank.rest.mappers.AccountMapper;
+import com.justin.eagle.bank.rest.mappers.TransactionMapper;
 import com.justin.eagle.bank.rest.mappers.UserMapper;
+import com.justin.eagle.bank.transaction.TransactionCrudService;
 import com.justin.eagle.bank.user.UserCrudService;
 import com.justin.eagle.bank.domain.ProvisionedUser;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,6 +56,10 @@ public class V1ApiController implements V1Api {
 
     @Autowired AccountMapper accountMapper;
 
+    @Autowired TransactionCrudService transactionCrudService;
+
+    @Autowired TransactionMapper transactionMapper;
+
     @Override
     public ResponseEntity<BankAccountResponse> createAccount(
             @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
@@ -64,8 +73,15 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
-    public ResponseEntity<TransactionResponse> createTransaction(String accountNumber, CreateTransactionRequest createTransactionRequest) {
-        return V1Api.super.createTransaction(accountNumber, createTransactionRequest);
+    public ResponseEntity<TransactionResponse> createTransaction(
+            @Pattern(regexp = "^01\\d{6}$") @Parameter(name = "accountNumber", description = "Account number of the bank account", required = true, in = ParameterIn.PATH) @PathVariable("accountNumber") String accountNumber,
+            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER) @RequestHeader(value = "Authorization", required = true) String authorization,
+            @Parameter(name = "CreateTransactionRequest", description = "Create a new transaction", required = true) @Valid @RequestBody CreateTransactionRequest createTransactionRequest) {
+
+        final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
+        TransactionRequest request = transactionMapper.buildTransactionRequest(authorizedUserId, accountNumber, createTransactionRequest);
+        ApprovedTransaction transaction = transactionCrudService.create(request);
+        return new ResponseEntity<>(transactionMapper.buildTransactionResponse(transaction), HttpStatus.CREATED);
     }
 
     @Override
