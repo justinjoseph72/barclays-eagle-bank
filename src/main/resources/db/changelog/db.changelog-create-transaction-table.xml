@@ -34,11 +34,14 @@
       <column name="status" type="varchar(15)">
         <constraints nullable="false"/>
       </column>
+      <column name="currency" type="varchar(3)">
+        <constraints nullable="false"/>
+      </column>
       <column name="amount" type="numeric(15,2)">
         <constraints nullable="false" />
       </column>
-      <column name="currency" type="varchar(3)">
-        <constraints nullable="false"/>
+      <column name="running_balance" type="numeric(15,2)">
+        <constraints nullable="false" />
       </column>
       <column name="record_creation_timestamp" type="timestamp without time zone">
         <constraints nullable="false" primaryKey="true" primaryKeyName="account_pk"/>

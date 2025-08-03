@@ -1,0 +1,90 @@
+package com.justin.eagle.bank.dao;
+
+import java.math.BigDecimal;
+import java.util.Objects;
+import java.util.UUID;
+
+import com.justin.eagle.bank.domain.ApprovedTransaction;
+import com.justin.eagle.bank.domain.CreditTransaction;
+import com.justin.eagle.bank.domain.DebitTransaction;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+@Slf4j
+@Repository
+public class TransactionRepository {
+
+    private final NamedParameterJdbcTemplate jdbcTemplate;
+
+    private static final String LOCK_BALANCE_FOR_ACCOUNT = """
+            select * from balance where account_id = :accountId for update nowait
+            """;
+
+    private static final String INSERT_TRANSACTION_LOG = """
+                     insert into transaction_log (
+            id,transaction_id,is_credit,reference,party_id,account_id,status,currency,amount,running_balance,record_creation_timestamp)
+            values (:id,:transactionId,:isCredit,:reference,:partyId,:accountId,:status,:currency,:amount,:runningBalance,:recordCreationTimestamp)""";
+
+    private static final String UPDATE_BALANCE_CREDIT = """
+            update balance set amount = amount + :transactionAmount where account_id = :accountId
+             returning amount as updatedAmount""";
+
+    private static final String UPDATE_BALANCE_DEBIT = """
+            update balance set amount = amount - :transactionAmount where account_id = :accountId
+            and amount >= :transactionAmount returning amount as updatedAmount""";
+
+    public TransactionRepository(NamedParameterJdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public void updateBalanceForTransaction(ApprovedTransaction transaction) {
+
+        final UUID accountId = transaction.accountIdentifier().id();
+        var lockBalanceParam = new MapSqlParameterSource();
+        lockBalanceParam.addValue("accountId", accountId);
+        jdbcTemplate.update(LOCK_BALANCE_FOR_ACCOUNT, lockBalanceParam);
+
+        var updateBalanceParam = new MapSqlParameterSource();
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
+
+
+        record TransactionSupport(String sql, Boolean creditDebitIndicator) {}
+
+        TransactionSupport picker = switch (transaction) {
+            case CreditTransaction creditTransaction -> new TransactionSupport(UPDATE_BALANCE_CREDIT, true);
+            case DebitTransaction debitTransaction -> new TransactionSupport(UPDATE_BALANCE_DEBIT, false);
+        };
+
+        final int updatedRows = jdbcTemplate.update(picker.sql, updateBalanceParam, keyHolder);
+
+        if (updatedRows == 0) {
+            log.warn("error crediting account '{}' with amount '{}'", accountId, transaction.transactionAmount());
+            throw new BalanceUpdateException("credit failed");
+        }
+
+        final BigDecimal updatedAmount = new BigDecimal(Objects.requireNonNull(keyHolder.getKeyAs(String.class)));
+
+        var transactionLogParam = new MapSqlParameterSource();
+        transactionLogParam.addValue("id", transaction.transactionId().id());
+        transactionLogParam.addValue("transactionId", transaction.transactionId().externalId());
+        transactionLogParam.addValue("isCredit", picker.creditDebitIndicator);
+        transactionLogParam.addValue("reference", transaction.transactionId().reference());
+        transactionLogParam.addValue("partyId", transaction.userIdentifier().partyId());
+        transactionLogParam.addValue("accountId", transaction.accountIdentifier().id());
+        transactionLogParam.addValue("status", "POSTED");
+        transactionLogParam.addValue("currency", transaction.transactionAmount().currency());
+        transactionLogParam.addValue("amount", transaction.transactionAmount().amount());
+        transactionLogParam.addValue("runningBalance", updatedAmount);
+        transactionLogParam.addValue("recordCreationTimestamp", transaction.auditData().createdTimestamp());
+
+        jdbcTemplate.update(INSERT_TRANSACTION_LOG, transactionLogParam);
+
+    }
+}

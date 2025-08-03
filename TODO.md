@@ -6,9 +6,17 @@
   
 * Auth
   * Add auth to accounts and transactions
+
+* Account
+  * Fetch all accounts for user testing
+  * delete account
   
 * User
   * Build update user
+  * delete user
+
+* Transactions
+  * all
   
 * Retries
   * Transaction retries
