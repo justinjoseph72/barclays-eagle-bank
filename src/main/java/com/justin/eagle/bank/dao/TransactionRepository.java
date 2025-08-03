@@ -58,15 +58,15 @@ public class TransactionRepository {
 
         record TransactionSupport(String sql, Boolean creditDebitIndicator) {}
 
-        TransactionSupport picker = switch (transaction) {
+        TransactionSupport action = switch (transaction) {
             case CreditTransaction creditTransaction -> new TransactionSupport(UPDATE_BALANCE_CREDIT, true);
             case DebitTransaction debitTransaction -> new TransactionSupport(UPDATE_BALANCE_DEBIT, false);
         };
 
-        final int updatedRows = jdbcTemplate.update(picker.sql, updateBalanceParam, keyHolder);
+        final int updatedRows = jdbcTemplate.update(action.sql, updateBalanceParam, keyHolder);
 
         if (updatedRows != 1) {
-            String message = "error %s account '%s' with amount '%s' for reference %s".formatted(picker.creditDebitIndicator ? "crediting" : "debiting",
+            String message = "error %s account '%s' with amount '%s' for reference %s".formatted(action.creditDebitIndicator ? "crediting" : "debiting",
                     accountId, transaction.transactionAmount(), transaction.transactionId().reference());
             log.warn(message);
             throw new BalanceUpdateException(message);
@@ -77,7 +77,7 @@ public class TransactionRepository {
         var transactionLogParam = new MapSqlParameterSource();
         transactionLogParam.addValue("id", transaction.transactionId().id());
         transactionLogParam.addValue("transactionId", transaction.transactionId().externalId());
-        transactionLogParam.addValue("isCredit", picker.creditDebitIndicator);
+        transactionLogParam.addValue("isCredit", action.creditDebitIndicator);
         transactionLogParam.addValue("reference", transaction.transactionId().reference());
         transactionLogParam.addValue("partyId", transaction.userIdentifier().partyId());
         transactionLogParam.addValue("accountId", transaction.accountIdentifier().id());
