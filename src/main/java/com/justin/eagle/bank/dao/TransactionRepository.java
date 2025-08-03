@@ -26,8 +26,9 @@ public class TransactionRepository {
             select * from balance where account_id = :accountId for update nowait
             """;
 
-    private static final String INSERT_TRANSACTION_LOG = """
-                     insert into transaction_log (
+    private static final String INSERT_TRANSACTION_LOG =
+            """
+            insert into transaction_log (
             id,transaction_id,is_credit,reference,party_id,account_id,status,currency,amount,running_balance,record_creation_timestamp)
             values (:id,:transactionId,:isCredit,:reference,:partyId,:accountId,:status,:currency,:amount,:runningBalance,:recordCreationTimestamp)""";
 
@@ -64,9 +65,11 @@ public class TransactionRepository {
 
         final int updatedRows = jdbcTemplate.update(picker.sql, updateBalanceParam, keyHolder);
 
-        if (updatedRows == 0) {
-            log.warn("error crediting account '{}' with amount '{}'", accountId, transaction.transactionAmount());
-            throw new BalanceUpdateException("credit failed");
+        if (updatedRows != 1) {
+            String message = "error %s account '%s' with amount '%s' for reference %s".formatted(picker.creditDebitIndicator ? "crediting" : "debiting",
+                    accountId, transaction.transactionAmount(), transaction.transactionId().reference());
+            log.warn(message);
+            throw new BalanceUpdateException(message);
         }
 
         final BigDecimal updatedAmount = new BigDecimal(Objects.requireNonNull(keyHolder.getKeyAs(String.class)));

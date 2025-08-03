@@ -62,6 +62,9 @@ dependencies {
 //	compileOnly 'com.github.javafaker:javafaker:1.0.2'
 	// https://mvnrepository.com/artifact/org.yaml/snakeyaml
 //	testImplementation("org.yaml:snakeyaml:2.4")
+
+	// https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter
+	testImplementation("org.mockito:mockito-junit-jupiter:5.18.0")
 }
 
 tasks.named('test') {
