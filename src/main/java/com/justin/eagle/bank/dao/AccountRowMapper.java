@@ -21,16 +21,8 @@ import org.springframework.stereotype.Component;
 @Component
 class AccountRowMapper implements RowMapper<ActiveAccount> {
 
-
     @Override
     public ActiveAccount mapRow(ResultSet rs, int rowNum) throws SQLException {
-
-        final Instant latestUpdatedTimestamp = Stream.of(rs.getTimestamp("account_last_updated_timestamp"), rs.getTimestamp("balance_updated_timestamp"))
-                .filter(Objects::nonNull)
-                .map(Timestamp::toInstant)
-                .max(Instant::compareTo)
-                .orElseThrow();
-
         return ActiveAccount.builder()
                 .id(UUID.fromString(rs.getString("id")))
                 .partyId(UUID.fromString(rs.getString("party_id")))
@@ -46,7 +38,7 @@ class AccountRowMapper implements RowMapper<ActiveAccount> {
                         .build())
                 .auditData(AuditData.builder()
                         .createdTimestamp(rs.getTimestamp("account_creation_timestamp").toInstant())
-                        .lastUpdatedTimestamp(latestUpdatedTimestamp)
+                        .lastUpdatedTimestamp(rs.getTimestamp("last_updated_timestamp").toInstant())
                         .build())
                 .build();
     }

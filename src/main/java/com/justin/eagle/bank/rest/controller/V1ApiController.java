@@ -1,5 +1,7 @@
 package com.justin.eagle.bank.rest.controller;
 
+import java.util.List;
+
 import com.justin.eagle.bank.account.AccountCrudService;
 import com.justin.eagle.bank.auth.AuthenticateUserService;
 import com.justin.eagle.bank.domain.ActiveAccount;
@@ -85,8 +87,15 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
-    public ResponseEntity<BankAccountResponse> fetchAccountByAccountNumber(String accountNumber) {
-        return V1Api.super.fetchAccountByAccountNumber(accountNumber);
+    public ResponseEntity<BankAccountResponse> fetchAccountByAccountNumber(
+            @Pattern(regexp = "^01\\d{6}$")
+            @Parameter(name = "accountNumber", description = "Account number of the bank account", required = true, in = ParameterIn.PATH)
+            @PathVariable("accountNumber") String accountNumber,
+            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
+            @RequestHeader(value = "Authorization", required = true) String authorization) {
+        final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
+        final ActiveAccount activeAccount = accountCrudService.fetchAccountDetails(accountNumber, authorizedUserId);
+        return new ResponseEntity<>(accountMapper.buildAccountResponse(activeAccount), HttpStatus.OK);
     }
 
     @Override
@@ -118,8 +127,15 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
-    public ResponseEntity<ListBankAccountsResponse> listAccounts() {
-        return V1Api.super.listAccounts();
+    public ResponseEntity<ListBankAccountsResponse> listAccounts(
+            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
+            @RequestHeader(value = "Authorization", required = true) String authorization) {
+        final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
+        final List<ActiveAccount> activeAccounts = accountCrudService.fetchAllAccountsForUser(authorizedUserId);
+        final List<BankAccountResponse> bankAccounts = activeAccounts.stream()
+                .map(accountMapper::buildAccountResponse)
+                .toList();
+        return new ResponseEntity<>(ListBankAccountsResponse.builder().accounts(bankAccounts).build(), HttpStatus.OK);
     }
 
     @Override

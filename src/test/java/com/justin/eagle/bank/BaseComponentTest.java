@@ -63,6 +63,24 @@ public class BaseComponentTest {
         return userId;
     }
 
+    protected String and_an_account_is_created_with_name(String userId, String accountName) throws Exception {
+
+        final String authToken = and_an_auth_token_is_generated_for_the_user(userId);
+        var payload = getNewAccountPayloadForAccountName(accountName);
+        final String createUserResponse = mockMvc.perform(post("/v1/accounts")
+                        .contentType("application/json")
+                        .header("Authorization", authToken)
+                        .content(payload)
+                )
+                .andExpect(status().is(201))
+                .andExpect(jsonPath("$.accountNumber").isNotEmpty())
+                .andExpect(jsonPath("$.balance").value(0.0))
+                .andReturn()
+                .getResponse().getContentAsString();
+
+        return JsonPath.parse(createUserResponse).read("$.accountNumber").toString();
+    }
+
     protected String and_an_auth_token_is_generated_for_the_user(String userId) throws Exception {
         final String response = mockMvc.perform(post("/v1/users/{userId}/authorize", userId)
                         .contentType("application/json")

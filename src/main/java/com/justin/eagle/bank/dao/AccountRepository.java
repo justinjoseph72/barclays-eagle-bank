@@ -46,7 +46,8 @@ public class AccountRepository {
              max(record_creation_timestamp) over (partition by id) as account_last_updated_timestamp
               from account where party_id = :partyId),
              latest_account_details as (select * from s1 where row_num = 1)
-            select latest_account_details.*,amount, currency,b.record_timestamp as balance_updated_timestamp
+            select lad.*,amount, currency,
+            greatest(b.record_timestamp, lad.account_last_updated_timestamp) as last_updated_timestamp
              from latest_account_details lad join balance b on b.account_id = lad.id
             """;
 
@@ -56,7 +57,8 @@ public class AccountRepository {
              max(record_creation_timestamp) over (partition by id) as account_last_updated_timestamp
               from account where account_number = :accountNumber),
              latest_account_details as (select * from s1 where row_num = 1)
-            select latest_account_details.*,amount, currency,b.record_timestamp as balance_updated_timestamp
+            select lad.*,amount, currency,
+            greatest(b.record_timestamp, lad.account_last_updated_timestamp) as last_updated_timestamp
              from latest_account_details lad join balance b on b.account_id = lad.id
             """;
     private final RowMapper<ActiveAccount> activeAccountRowMapper;
