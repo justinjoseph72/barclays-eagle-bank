@@ -2,13 +2,19 @@ package com.justin.eagle.bank.dao;
 
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import com.justin.eagle.bank.domain.ActiveAccount;
 import com.justin.eagle.bank.utl.IdSupplier;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.annotation.Isolation;
@@ -29,14 +35,36 @@ public class AccountRepository {
             values (:id, :accountNumber, :sortCode, :partyId, :status, :type, :name,:recordCreationTimestamp)
             """;
 
-    private static final String INSERT_BALACE_SQL = """
+    private static final String INSERT_BALANCE_SQL = """
             insert into balance (account_id, currency, amount, record_timestamp)
             values (:accountId, :currency, :amount, :recordTimestamp)
             """;
 
-    public AccountRepository(NamedParameterJdbcTemplate jdbcTemplate, IdSupplier idSupplier) {
+    private static final String FETCH_ALL_ACCOUNTS_FOR_USER_SQL = """
+            with s1 as (select *, row_number() over (partition by id order by record_creation_timestamp desc) as row_num,
+             min(record_creation_timestamp) over (partition by id) as account_creation_timestamp,
+             max(record_creation_timestamp) over (partition by id) as account_last_updated_timestamp
+              from account where party_id = :partyId),
+             latest_account_details as (select * from s1 where row_num = 1)
+            select latest_account_details.*,amount, currency,b.record_timestamp as balance_updated_timestamp
+             from latest_account_details lad join balance b on b.account_id = lad.id
+            """;
+
+    private static final String FETCH_ACCOUNT_DETAIL_SQL = """
+            with s1 as (select *, row_number() over (partition by id order by record_creation_timestamp desc) as row_num,
+             min(record_creation_timestamp) over (partition by id) as account_creation_timestamp,
+             max(record_creation_timestamp) over (partition by id) as account_last_updated_timestamp
+              from account where account_number = :accountNumber),
+             latest_account_details as (select * from s1 where row_num = 1)
+            select latest_account_details.*,amount, currency,b.record_timestamp as balance_updated_timestamp
+             from latest_account_details lad join balance b on b.account_id = lad.id
+            """;
+    private final RowMapper<ActiveAccount> activeAccountRowMapper;
+
+    public AccountRepository(NamedParameterJdbcTemplate jdbcTemplate, IdSupplier idSupplier, RowMapper<ActiveAccount> activeAccountRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.idSupplier = idSupplier;
+        this.activeAccountRowMapper = activeAccountRowMapper;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -70,7 +98,34 @@ public class AccountRepository {
         balanceParam.addValue("amount", activeAccount.currentBalance().amount());
         balanceParam.addValue("recordTimestamp", Timestamp.from(activeAccount.auditData().createdTimestamp()), Types.TIMESTAMP);
 
-        jdbcTemplate.update(INSERT_BALACE_SQL, balanceParam);
+        jdbcTemplate.update(INSERT_BALANCE_SQL, balanceParam);
+
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
+    public List<ActiveAccount> findAllAccountsForUser(UUID partyId) {
+        try {
+            var param = new MapSqlParameterSource();
+            param.addValue("partyId", partyId);
+            return jdbcTemplate.query(FETCH_ALL_ACCOUNTS_FOR_USER_SQL, param, activeAccountRowMapper);
+        } catch (Exception e) {
+            log.warn("error fetching account details for party id  '{}'", partyId);
+            throw new DatabaseInteractionException(e);
+        }
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
+    public Optional<ActiveAccount> findAccountDetail(String accountNumber) {
+        try {
+            var param = new MapSqlParameterSource();
+            param.addValue("accountNumber", accountNumber);
+            return Optional.ofNullable(jdbcTemplate.queryForObject(FETCH_ACCOUNT_DETAIL_SQL, param, activeAccountRowMapper));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        } catch (Exception e) {
+            log.warn("error fetching account details for account  '{}'", accountNumber);
+            throw new DatabaseInteractionException(e);
+        }
 
     }
 }

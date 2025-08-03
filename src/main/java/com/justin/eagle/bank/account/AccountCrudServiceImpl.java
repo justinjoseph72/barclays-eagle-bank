@@ -2,10 +2,11 @@ package com.justin.eagle.bank.account;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.justin.eagle.bank.dao.AccountRepository;
-import com.justin.eagle.bank.dao.DatabaseInteractionException;
 import com.justin.eagle.bank.domain.AccountIdentifier;
 import com.justin.eagle.bank.domain.ActiveAccount;
 import com.justin.eagle.bank.domain.AuditData;
@@ -37,19 +38,7 @@ class AccountCrudServiceImpl implements AccountCrudService {
 
     @Override
     public ActiveAccount createNewAccount(PendingAccount accountDetails) {
-        final UUID partyId = userRepository.getUserStatusInfo(accountDetails.userId())
-                .filter(user -> {
-                    final boolean isActive = "ACTIVE".equals(user.status());
-                    if (!isActive) {
-                        log.warn("the user with id '{}' status is {}", user.userId(), user.status());
-                    }
-                    return isActive;
-                })
-                .map(UserStatusDbInfo::partyId)
-                .orElseThrow(() -> {
-                    log.warn("user with id '{}' not found", accountDetails.userId());
-                    return new UserNotFoundException();
-                });
+        final UUID partyId = getPartyIdForActiveUserId(accountDetails.userId());
 
         final String newAccountNumber = accountRepository.getNewAccountNumber();
         Instant now = nowTimeSupplier.currentInstant();
@@ -75,5 +64,44 @@ class AccountCrudServiceImpl implements AccountCrudService {
         accountRepository.persistNewAccount(activeAccount);
 
         return activeAccount;
+    }
+
+    @Override
+    public List<ActiveAccount> fetchAllAccountsForUser(String userId) {
+        final UUID partyId = getPartyIdForActiveUserId(userId);
+        return accountRepository.findAllAccountsForUser(partyId);
+    }
+
+    @Override
+    public ActiveAccount fetchAccountDetails(String accountNumber, String userId) {
+        final UUID partyId = getPartyIdForActiveUserId(userId);
+        final Optional<ActiveAccount> accountDetail = accountRepository.findAccountDetail(accountNumber);
+        accountDetail
+                .ifPresent(activeAccount -> {
+                    if (!partyId.equals(activeAccount.partyId())) {
+                        log.warn("user '{}' is forbidden to view account details of account'{}'", userId, accountNumber);
+                        throw new AccountViewForbiddenException(userId, accountNumber);
+                    }
+                });
+        return accountDetail.orElseThrow(() -> {
+            log.warn("No details found for account number '{}'", accountNumber);
+            return new NoAccountFoundException(accountNumber);
+        });
+    }
+
+    private UUID getPartyIdForActiveUserId(String userId) {
+        return userRepository.getUserStatusInfo(userId)
+                .filter(user -> {
+                    final boolean isActive = "ACTIVE".equals(user.status());
+                    if (!isActive) {
+                        log.warn("the user with id '{}' status is {}", user.userId(), user.status());
+                    }
+                    return isActive;
+                })
+                .map(UserStatusDbInfo::partyId)
+                .orElseThrow(() -> {
+                    log.warn("user with id '{}' not found", userId);
+                    return new UserNotFoundException();
+                });
     }
 }

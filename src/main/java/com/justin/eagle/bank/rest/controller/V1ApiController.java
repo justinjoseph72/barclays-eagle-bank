@@ -53,14 +53,11 @@ public class V1ApiController implements V1Api {
     public ResponseEntity<BankAccountResponse> createAccount(
             @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
             @RequestHeader(value = "Authorization", required = true) String authorization,
-            @Parameter(name = "CreateBankAccountRequest", description = "Create a new bank account for the user", required = true) @Valid @RequestBody CreateBankAccountRequest createBankAccountRequest
-    ) {
+            @Parameter(name = "CreateBankAccountRequest", description = "Create a new bank account for the user", required = true)
+            @Valid @RequestBody CreateBankAccountRequest createBankAccountRequest) {
         final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
-
         PendingAccount pendingAccount = accountMapper.buildPendingAccount(authorizedUserId, createBankAccountRequest);
-
         final ActiveAccount newAccount = accountCrudService.createNewAccount(pendingAccount);
-
         return new ResponseEntity<>(accountMapper.buildAccountResponse(newAccount), HttpStatus.CREATED);
     }
 
@@ -97,7 +94,6 @@ public class V1ApiController implements V1Api {
         return V1Api.super.fetchAccountTransactionByID(accountNumber, transactionId);
     }
 
-    //TODO check auth and error handling
     @Override
     public ResponseEntity<UserResponse> fetchUserByID(@Pattern(regexp = "^usr-[A-Za-z0-9]+$")
             @Parameter(name = "userId", description = "ID of the user", required = true, in = ParameterIn.PATH)

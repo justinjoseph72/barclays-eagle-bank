@@ -59,11 +59,11 @@
       <column name="account_id" type="uuid">
         <constraints nullable="false" primaryKey="true" primaryKeyName="balance_pk"/>
       </column>
-      <column name="currency" type="varchar(3)">
-        <constraints nullable="false"/>
-      </column>
       <column name="amount" type="numeric(15,2)">
         <constraints nullable="false" />
+      </column>
+      <column name="currency" type="varchar(3)">
+        <constraints nullable="false"/>
       </column>
       <column name="record_timestamp" type="timestamp without time zone">
         <constraints nullable="false"/>
