@@ -47,7 +47,7 @@ class TransactionServiceImpl implements TransactionService {
 
         final ApprovedTransaction transaction = approvedTransactionMapper.build(request, info);
         transactionRepository.updateBalanceForTransaction(transaction);
-        log.info("Successfully created transaction for user '{}' and account '{}' with  transaction id '{}", transaction.userIdentifier().externalUserId(),
+        log.info("Successfully created {} transaction for user '{}' and account '{}' with  transaction id '{}", request.type(), transaction.userIdentifier().externalUserId(),
                 transaction.accountIdentifier().accountNumber(), transaction.transactionId().externalId());
         return transaction;
     }

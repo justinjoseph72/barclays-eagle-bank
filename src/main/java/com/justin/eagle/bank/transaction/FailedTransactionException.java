@@ -7,6 +7,6 @@ import com.justin.eagle.bank.transaction.model.TransactionErrorCause;
 public class FailedTransactionException extends RuntimeException {
 
     public FailedTransactionException(TransactionRequest request, TransactionErrorCause errorCause) {
-
+        super("the %s transaction failed due to %s".formatted(request.type(), errorCause));
     }
 }

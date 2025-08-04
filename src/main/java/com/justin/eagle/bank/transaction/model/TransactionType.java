@@ -5,7 +5,7 @@ import lombok.Getter;
 @Getter
 public enum TransactionType {
     CREDIT(true, "deposit"),
-    DEBIT(false, "withdraw");
+    DEBIT(false, "withdrawal");
     private final boolean creditIndicator;
     private final String value;
 
