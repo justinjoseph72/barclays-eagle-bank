@@ -35,22 +35,24 @@ public class TransactionRepository {
 
     private static final String INSERT_TRANSACTION_LOG =
             """
-                    insert into transaction_log (
+                     insert into transaction_log (
                     id,transaction_id,is_credit,reference,party_id,account_id,status,currency,amount,running_balance,record_creation_timestamp)
                     values (:id,:transactionId,:isCredit,:reference,:partyId,:accountId,:status,:currency,:amount,:runningBalance,:recordCreationTimestamp)""";
 
     private static final String UPDATE_BALANCE_CREDIT = """
             update balance set amount = amount + :transactionAmount,
              where account_id = :accountId
-             returning amount as updatedAmount""";
+             returning amount as updatedAmount
+            """;
 
     private static final String UPDATE_BALANCE_DEBIT = """
             update balance set amount = amount - :transactionAmount where account_id = :accountId
-            and amount >= :transactionAmount returning amount as updatedAmount""";
+            and amount >= :transactionAmount returning amount as updatedAmount
+            """;
     private static final String FETCH_USER_ACCOUNT_DETAIL_SQL = """
             with latest_user_info as (select id as party_id, external_id, status as party_status
              from party where external_id = :userId order by record_creation_timestamp desc limit 1),
-            latest_user_account_info as (select lui.*, a.id as account_id, a,account_number, a.status as account_status from account a join
+            latest_user_account_info as (select lui.*, a.id as account_id, a.account_number, a.status as account_status from account a join
              latest_user_info lui on lui.party_id = a.party_id where account_number = :accountNumber order by a.record_creation_timestamp desc limit 1)
              select luai.*, b.amount,b.currency from latest_user_account_info luai join balance b on luai.account_id = b.account_id
             """;
