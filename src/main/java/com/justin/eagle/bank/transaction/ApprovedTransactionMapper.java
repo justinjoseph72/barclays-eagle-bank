@@ -1,5 +1,8 @@
 package com.justin.eagle.bank.transaction;
 
+import java.util.List;
+
+import com.justin.eagle.bank.dao.model.TransactionLog;
 import com.justin.eagle.bank.dao.model.UserAccountBalanceInfo;
 import com.justin.eagle.bank.domain.AccountIdentifier;
 import com.justin.eagle.bank.domain.ApprovedTransaction;
@@ -32,6 +35,32 @@ class ApprovedTransactionMapper {
             case DEBIT -> buildDebitTransaction(request, info);
         };
     }
+
+    public ApprovedTransaction map(UserAccountBalanceInfo accountBalanceInfo, TransactionLog transactionLog) {
+        return transactionLog.isCredit() ? buildCreditTransaction(accountBalanceInfo, transactionLog) :
+                buildDebitTransaction(accountBalanceInfo, transactionLog);
+    }
+
+    private ApprovedTransaction buildCreditTransaction(UserAccountBalanceInfo info, TransactionLog log) {
+        return CreditTransaction.builder()
+                .transactionId(buildTransactionIdentifier(log))
+                .transactionAmount(log.amount())
+                .auditData(buildAuditData(log))
+                .userIdentifier(buildUserIdentifier(info))
+                .accountIdentifier(buildAccountIdentifier(info))
+                .build();
+    }
+
+    private ApprovedTransaction buildDebitTransaction(UserAccountBalanceInfo info, TransactionLog log) {
+        return DebitTransaction.builder()
+                .transactionId(buildTransactionIdentifier(log))
+                .transactionAmount(log.amount())
+                .auditData(buildAuditData(log))
+                .userIdentifier(buildUserIdentifier(info))
+                .accountIdentifier(buildAccountIdentifier(info))
+                .build();
+    }
+
 
     private ApprovedTransaction buildDebitTransaction(TransactionRequest request, UserAccountBalanceInfo info) {
         return DebitTransaction.builder()
@@ -73,11 +102,25 @@ class ApprovedTransactionMapper {
                 .build();
     }
 
+    private AuditData buildAuditData(TransactionLog log) {
+        return AuditData.builder()
+                .createdTimestamp(log.auditData().createdTimestamp())
+                .build();
+    }
+
     private TransactionIdentifier buildTransactionIdentifier(TransactionRequest request) {
         return TransactionIdentifier.builder()
                 .id(idSupplier.getNewId())
                 .externalId(idSupplier.newTransactionId())
                 .reference(request.reference())
+                .build();
+    }
+
+    private TransactionIdentifier buildTransactionIdentifier(TransactionLog log) {
+        return TransactionIdentifier.builder()
+                .id(log.id())
+                .externalId(log.transactionId())
+                .reference(log.reference())
                 .build();
     }
 

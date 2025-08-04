@@ -1,16 +1,17 @@
 package com.justin.eagle.bank.dao;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.justin.eagle.bank.dao.model.TransactionLog;
 import com.justin.eagle.bank.dao.model.UserAccountBalanceInfo;
 import com.justin.eagle.bank.domain.ApprovedTransaction;
 import com.justin.eagle.bank.domain.CreditTransaction;
 import com.justin.eagle.bank.domain.DebitTransaction;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -26,6 +27,7 @@ public class TransactionRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final UserAccountBalanceInfoRowMapper usrAccountBalanceInfoRowMapper;
+    private final TransactionLogRowMapper transactionRowMapper;
 
     private static final String LOCK_BALANCE_FOR_ACCOUNT = """
             select * from balance where account_id = :accountId for update nowait
@@ -53,12 +55,18 @@ public class TransactionRepository {
              select luai.*, b.amount,b.currency from latest_user_account_info luai join balance b on luai.account_id = b.account_id
             """;
 
-    public TransactionRepository(NamedParameterJdbcTemplate jdbcTemplate, UserAccountBalanceInfoRowMapper usrAccountBalanceInfoRowMapper) {
+    private static final String FETCH_ALL_TRANSACTIONS_SQL = "select * from transaction_log where party_id : partyId and account_id = :accountId order by record_creation_timestamp desc";
+    private static final String FETCH_TRANSACTION_SQL = "select * from transaction_log where party_id : partyId and account_id = :accountId and transaction_id = :transactionId";
+
+
+    public TransactionRepository(NamedParameterJdbcTemplate jdbcTemplate, UserAccountBalanceInfoRowMapper usrAccountBalanceInfoRowMapper,
+            TransactionLogRowMapper transactionRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.usrAccountBalanceInfoRowMapper = usrAccountBalanceInfoRowMapper;
+        this.transactionRowMapper = transactionRowMapper;
     }
 
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void updateBalanceForTransaction(ApprovedTransaction transaction) {
 
         final UUID accountId = transaction.accountIdentifier().id();
@@ -112,6 +120,33 @@ public class TransactionRepository {
 
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(FETCH_USER_ACCOUNT_DETAIL_SQL, param, usrAccountBalanceInfoRowMapper));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        } catch (Exception e) {
+            throw new DatabaseInteractionException(e);
+        }
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
+    public List<TransactionLog> fetchAllTransactions(UUID partyId, UUID accountId) {
+        var param = new MapSqlParameterSource();
+        param.addValue("partyId", partyId);
+        param.addValue("accountId", accountId);
+        try {
+            return jdbcTemplate.query(FETCH_ALL_TRANSACTIONS_SQL, param, transactionRowMapper);
+        } catch (Exception e) {
+            throw new DatabaseInteractionException(e);
+        }
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
+    public Optional<TransactionLog> fetchTransaction(UUID partyId, UUID accountId, String transactionId) {
+        var param = new MapSqlParameterSource();
+        param.addValue("partyId", partyId);
+        param.addValue("accountId", accountId);
+        param.addValue("transactionId", transactionId);
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(FETCH_TRANSACTION_SQL, param, transactionRowMapper));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         } catch (Exception e) {

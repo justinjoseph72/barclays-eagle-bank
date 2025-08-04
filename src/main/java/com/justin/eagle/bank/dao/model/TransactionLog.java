@@ -7,5 +7,5 @@ import com.justin.eagle.bank.domain.AuditData;
 import lombok.Builder;
 
 @Builder
-public record TransactionLog(UUID id, String transactionId, UUID partyId, UUID accountId, boolean isCredit, Amount amount, AuditData auditData ) {
+public record TransactionLog(UUID id, String transactionId, UUID partyId, UUID accountId, boolean isCredit, String reference, Amount amount, AuditData auditData ) {
 }

@@ -30,9 +30,9 @@ class TransactionRepositoryTest {
 
     private final NamedParameterJdbcTemplate jdbcTemplate = Mockito.mock(NamedParameterJdbcTemplate.class);
     private final UserAccountBalanceInfoRowMapper rowMapper = Mockito.mock(UserAccountBalanceInfoRowMapper.class);
-    private final KeyHolder keyHolder = Mockito.mock(KeyHolder.class);
+    private final TransactionLogRowMapper transactionLogRowMapper = Mockito.mock(TransactionLogRowMapper.class);
 
-    private final TransactionRepository repository = new TransactionRepository(jdbcTemplate, rowMapper);
+    private final TransactionRepository repository = new TransactionRepository(jdbcTemplate, rowMapper, transactionLogRowMapper);
 
     @Captor ArgumentCaptor<String> updateSqlCaptor;
     @Captor ArgumentCaptor<String> insertLogSqlCaptor;

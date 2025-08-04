@@ -1,5 +1,6 @@
 package com.justin.eagle.bank.transaction;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -7,6 +8,7 @@ import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 
 import com.justin.eagle.bank.dao.TransactionRepository;
+import com.justin.eagle.bank.dao.model.TransactionLog;
 import com.justin.eagle.bank.dao.model.UserAccountBalanceInfo;
 import com.justin.eagle.bank.domain.ApprovedTransaction;
 import com.justin.eagle.bank.domain.TransactionRequest;
@@ -39,14 +41,9 @@ class TransactionCrudServiceImpl implements TransactionCrudService {
     @Override
     public ApprovedTransaction create(TransactionRequest request) {
 
-        final Optional<UserAccountBalanceInfo> userAccountBalanceInfo = transactionRepository.fetchLatestStatusForUserAndAccount(request.userId(),
-                request.accountNumber());
-        final UserAccountBalanceInfo info = userAccountBalanceInfo.orElseThrow(() -> {
-            log.warn("no matching account found for userId '{}' and account number '{}'", request.userId(), request.accountNumber());
-            return new UserNotFoundException();
-        });
+        final UserAccountBalanceInfo info = getUserAccountBalanceInfo(request.userId(), request.accountNumber());
 
-        performBusinessValidation(request, info);
+        performBusinessValidationForCreateTransaction(request, info);
 
         final ApprovedTransaction transaction = approvedTransactionMapper.build(request, info);
         transactionRepository.updateBalanceForTransaction(transaction);
@@ -55,7 +52,38 @@ class TransactionCrudServiceImpl implements TransactionCrudService {
         return transaction;
     }
 
-    private void performBusinessValidation(TransactionRequest request, UserAccountBalanceInfo info) {
+    @Override
+    public List<ApprovedTransaction> fetchTransactions(String userId, String accountNumber) {
+        final UserAccountBalanceInfo info = getUserAccountBalanceInfo(userId, accountNumber);
+
+        var transactionInfos = transactionRepository.fetchAllTransactions(info.userInfo().partyId(), info.accountInfo().accountId());
+        return transactionInfos.stream()
+                .map(transactionLog -> approvedTransactionMapper.map(info, transactionLog))
+                .toList();
+    }
+
+    @Override
+    public ApprovedTransaction fetchTransaction(String userId, String accountNumber, String transactionId) {
+        final UserAccountBalanceInfo info = getUserAccountBalanceInfo(userId, accountNumber);
+        Optional<TransactionLog> transactionLog = transactionRepository.fetchTransaction(info.userInfo().partyId(), info.accountInfo().accountId(), transactionId);
+        return transactionLog.map(log -> approvedTransactionMapper.map(info, log))
+                .orElseThrow(() -> {
+                    log.info("transaction id {} not found", transactionId);
+                    return new TransactionNotFoundException(userId, accountNumber, transactionId);
+                });
+    }
+
+    private UserAccountBalanceInfo getUserAccountBalanceInfo(String userId, String accountNumber) {
+        final Optional<UserAccountBalanceInfo> userAccountBalanceInfo = transactionRepository.fetchLatestStatusForUserAndAccount(userId,
+                accountNumber);
+        return userAccountBalanceInfo
+                .orElseThrow(() -> {
+                    log.warn("no matching account found for userId '{}' and account number '{}'", userId, accountNumber);
+                    return new UserNotFoundException();
+                });
+    }
+
+    private void performBusinessValidationForCreateTransaction(TransactionRequest request, UserAccountBalanceInfo info) {
         final Optional<TransactionErrorCause> failedTransaction = validationMap.entrySet()
                 .stream()
                 .takeWhile(entry -> entry.getValue().test(request, info))

@@ -5,7 +5,4 @@ import lombok.Builder;
 
 @Builder
 public record TransactionRequest(String userId, String accountNumber, String reference, TransactionType type, Amount amount)  {
-
-
-    ApprovedTransaction approve(User)
 }
