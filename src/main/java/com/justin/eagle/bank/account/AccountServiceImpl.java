@@ -22,14 +22,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-class AccountCrudServiceImpl implements AccountCrudService {
+class AccountServiceImpl implements AccountService {
 
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
     private final IdSupplier idSupplier;
     private final NowTimeSupplier nowTimeSupplier;
 
-    AccountCrudServiceImpl(UserRepository userRepository, AccountRepository accountRepository, IdSupplier idSupplier, NowTimeSupplier nowTimeSupplier) {
+    AccountServiceImpl(UserRepository userRepository, AccountRepository accountRepository, IdSupplier idSupplier, NowTimeSupplier nowTimeSupplier) {
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
         this.idSupplier = idSupplier;

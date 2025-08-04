@@ -20,14 +20,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-class TransactionCrudServiceImpl implements TransactionCrudService {
+class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final ApprovedTransactionMapper approvedTransactionMapper;
 
     private final Map<TransactionErrorCause, BiPredicate<TransactionRequest, UserAccountBalanceInfo>> validationMap;
 
-    public TransactionCrudServiceImpl(TransactionRepository transactionRepository, ApprovedTransactionMapper approvedTransactionMapper) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository, ApprovedTransactionMapper approvedTransactionMapper) {
         this.transactionRepository = transactionRepository;
         this.approvedTransactionMapper = approvedTransactionMapper;
         this.validationMap = Map.of(

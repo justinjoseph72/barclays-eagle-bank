@@ -1,6 +1,7 @@
 package com.justin.eagle.bank.rest.mappers;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.justin.eagle.bank.domain.Amount;
 import com.justin.eagle.bank.domain.ApprovedTransaction;
@@ -8,6 +9,7 @@ import com.justin.eagle.bank.domain.CreditTransaction;
 import com.justin.eagle.bank.domain.DebitTransaction;
 import com.justin.eagle.bank.domain.TransactionRequest;
 import com.justin.eagle.bank.generated.openapi.rest.model.CreateTransactionRequest;
+import com.justin.eagle.bank.generated.openapi.rest.model.ListTransactionsResponse;
 import com.justin.eagle.bank.generated.openapi.rest.model.TransactionResponse;
 import com.justin.eagle.bank.transaction.model.TransactionType;
 import jakarta.validation.Valid;
@@ -49,6 +51,16 @@ public class TransactionMapper {
                 .amount(transaction.transactionAmount().amount().doubleValue())
                 .currency(TransactionResponse.CurrencyEnum.fromValue(transaction.transactionAmount().currency()))
                 .createdTimestamp(transaction.auditData().createdTimestamp())
+                .build();
+    }
+
+    public ListTransactionsResponse buildListTransactionsResponse(List<ApprovedTransaction> approvedTransactions) {
+        return ListTransactionsResponse
+                .builder()
+                .transactions(approvedTransactions
+                        .stream()
+                        .map(this::buildTransactionResponse)
+                        .toList())
                 .build();
     }
 }

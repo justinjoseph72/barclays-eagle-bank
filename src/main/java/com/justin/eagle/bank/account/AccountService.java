@@ -5,7 +5,7 @@ import java.util.List;
 import com.justin.eagle.bank.domain.ActiveAccount;
 import com.justin.eagle.bank.domain.PendingAccount;
 
-public interface AccountCrudService {
+public interface AccountService {
 
     ActiveAccount createNewAccount(PendingAccount accountDetails);
 

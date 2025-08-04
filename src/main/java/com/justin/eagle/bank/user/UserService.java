@@ -5,7 +5,7 @@ import java.util.Optional;
 import com.justin.eagle.bank.domain.UserInfo;
 import com.justin.eagle.bank.domain.ProvisionedUser;
 
-public interface UserCrudService {
+public interface UserService {
 
     ProvisionedUser createUser(UserInfo request);
 

@@ -13,13 +13,13 @@ import com.justin.eagle.bank.utl.NowTimeSupplier;
 import org.springframework.stereotype.Service;
 
 @Service
-class UserCrudServiceImpl implements UserCrudService {
+class UserServiceImpl implements UserService {
 
     private final IdSupplier idSupplier;
     private final NowTimeSupplier nowTimeSupplier;
     private final UserRepository userRepository;
 
-    UserCrudServiceImpl(IdSupplier idSupplier, NowTimeSupplier nowTimeSupplier, UserRepository userRepository) {
+    UserServiceImpl(IdSupplier idSupplier, NowTimeSupplier nowTimeSupplier, UserRepository userRepository) {
         this.idSupplier = idSupplier;
         this.nowTimeSupplier = nowTimeSupplier;
         this.userRepository = userRepository;

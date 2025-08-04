@@ -350,6 +350,12 @@ paths:
           schema:
             type: string
             pattern: ^01\d{6}$
+        - name: Authorization
+          in: header
+          description: Bearer JWT
+          required: true
+          schema:
+            type: string
       security:
         - bearerAuth: []
       responses:
@@ -410,6 +416,12 @@ paths:
           schema:
             type: string
             pattern: ^tan-[A-Za-z0-9]$
+        - name: Authorization
+          in: header
+          description: Bearer JWT
+          required: true
+          schema:
+            type: string
       security:
         - bearerAuth: []
       responses:
