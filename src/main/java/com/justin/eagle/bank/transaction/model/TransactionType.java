@@ -14,7 +14,7 @@ public enum TransactionType {
         this.value = value;
     }
 
-    TransactionType fromValue(String input) {
+    public static TransactionType fromValue(String input) {
         for (TransactionType transactionType : TransactionType.values()) {
             if (transactionType.value.equalsIgnoreCase(input)) {
                 return transactionType;

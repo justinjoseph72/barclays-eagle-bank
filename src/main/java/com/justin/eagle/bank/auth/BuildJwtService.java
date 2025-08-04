@@ -31,7 +31,6 @@ class BuildJwtService {
     String buildJwt(String userId) {
         Long createdAt = nowTimeSupplier.currentEpochSec();
         Long expireAt = createdAt + authExpirySec;
-        log.info(" created at {} and expiring at {}", createdAt, expireAt);
         final SignatureAlgorithm securityAlo = SignatureAlgorithm.HS512;
         final byte[] keyBytes = Base64.getEncoder().encode("someKeyTobeInjected".repeat(100).getBytes(StandardCharsets.UTF_8));
         final SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, securityAlo.getJcaName());

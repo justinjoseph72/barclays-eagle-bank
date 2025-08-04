@@ -24,7 +24,7 @@ public class TransactionMapper {
             @Valid CreateTransactionRequest createTransactionRequest) {
 
         return TransactionRequest.builder()
-                .type(TransactionType.valueOf(createTransactionRequest.getType().getValue()))
+                .type(TransactionType.fromValue(createTransactionRequest.getType().getValue()))
                 .reference(createTransactionRequest.getReference())
                 .userId(authorizedUserId)
                 .accountNumber(accountNumber)

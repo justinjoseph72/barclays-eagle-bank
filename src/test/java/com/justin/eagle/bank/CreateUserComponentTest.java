@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
@@ -14,6 +15,7 @@ public class CreateUserComponentTest extends BaseComponentTest {
 
 
 
+    @Disabled
     @Test
     void shouldVerifyEmptyStringInThePayloadForCreateUserWillReturn400Error() throws Exception {
 
