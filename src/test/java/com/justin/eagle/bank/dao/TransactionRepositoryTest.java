@@ -52,7 +52,7 @@ class TransactionRepositoryTest {
                 .thenAnswer(invocationOnMock -> {
                     Object[] args = invocationOnMock.getArguments();
                     Map<String, Object> keyMap = new HashMap<String, Object>();
-                    keyMap.put("updatedAmount", "343.44");
+                    keyMap.put("updatedAmount", new BigDecimal("343.44"));
                     ((GeneratedKeyHolder) args[2]).getKeyList().add(keyMap);
                     return 1;
                 });
@@ -80,7 +80,7 @@ class TransactionRepositoryTest {
                 .thenAnswer(invocationOnMock -> {
                     Object[] args = invocationOnMock.getArguments();
                     Map<String, Object> keyMap = new HashMap<String, Object>();
-                    keyMap.put("updatedAmount", "343.44");
+                    keyMap.put("updatedAmount", new BigDecimal("343.44"));
                     ((GeneratedKeyHolder) args[2]).getKeyList().add(keyMap);
                     return 1;
                 });

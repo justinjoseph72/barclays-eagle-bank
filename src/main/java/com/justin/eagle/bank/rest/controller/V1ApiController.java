@@ -179,7 +179,6 @@ public class V1ApiController implements V1Api {
         return V1Api.super.updateUserByID(userId, updateUserRequest);
     }
 
-    //Done need testing for unhappy path
     @Override
     public ResponseEntity<UserAuthResponse> authorizeUserId(
             @Pattern(regexp = "^usr-[A-Za-z0-9]+$") @Parameter(name = "userId", description = "ID of the user", required = true, in = ParameterIn.PATH) @PathVariable("userId") String userId) {

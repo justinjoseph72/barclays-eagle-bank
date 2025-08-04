@@ -26,9 +26,9 @@ class UserAccountBalanceInfoRowMapper implements RowMapper<UserAccountBalanceInf
                 .accountInfo(AccountStatusInfo.builder()
                         .accountId(UUID.fromString(rs.getString("account_id")))
                         .accountNumber(rs.getString("account_number"))
-                        .status(rs.getString("status"))
+                        .status(rs.getString("account_status"))
                         .build())
-                .currentBalance(new BigDecimal(rs.getString("amount")))
+                .currentBalance(new BigDecimal(rs.getString("balance_amount")))
                 .currency(rs.getString("currency"))
                 .build();
     }

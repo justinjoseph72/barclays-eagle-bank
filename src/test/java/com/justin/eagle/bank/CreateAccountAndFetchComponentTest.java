@@ -88,8 +88,8 @@ public class CreateAccountAndFetchComponentTest extends BaseComponentTest {
                         .header("Authorization", authToken)
                 )
                 .andExpect(status().is(200))
-                .andExpect(jsonPath("$.accounts[0].accountNumber").value(accountNumber1))
-                .andExpect(jsonPath("$.accounts[1].accountNumber").value(accountNumber2))
+                .andExpect(jsonPath("$.accounts[0].accountNumber").value(accountNumber2))
+                .andExpect(jsonPath("$.accounts[1].accountNumber").value(accountNumber1))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

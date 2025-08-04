@@ -1,8 +1,9 @@
 package com.justin.eagle.bank.dao;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,28 +34,59 @@ public class TransactionRepository {
             select * from balance where account_id = :accountId for update nowait
             """;
 
-    private static final String INSERT_TRANSACTION_LOG =
-            """
-                     insert into transaction_log (
+    private static final String INSERT_TRANSACTION_LOG ="""
+                    insert into transaction_log (
                     id,transaction_id,is_credit,reference,party_id,account_id,status,currency,amount,running_balance,record_creation_timestamp)
                     values (:id,:transactionId,:isCredit,:reference,:partyId,:accountId,:status,:currency,:amount,:runningBalance,:recordCreationTimestamp)""";
 
     private static final String UPDATE_BALANCE_CREDIT = """
-            update balance set amount = amount + :transactionAmount,
+            update balance set amount = amount + :transactionAmount
              where account_id = :accountId
              returning amount as updatedAmount
             """;
 
     private static final String UPDATE_BALANCE_DEBIT = """
-            update balance set amount = amount - :transactionAmount where account_id = :accountId
-            and amount >= :transactionAmount returning amount as updatedAmount
+            update balance set amount = amount - :transactionAmount
+            where account_id = :accountId and amount >= :transactionAmount
+            returning amount as updatedAmount
             """;
     private static final String FETCH_USER_ACCOUNT_DETAIL_SQL = """
-            with latest_user_info as (select id as party_id, external_id, status as party_status
-             from party where external_id = :userId order by record_creation_timestamp desc limit 1),
-            latest_user_account_info as (select lui.*, a.id as account_id, a.account_number, a.status as account_status from account a join
-             latest_user_info lui on lui.party_id = a.party_id where account_number = :accountNumber order by a.record_creation_timestamp desc limit 1)
-             select luai.*, b.amount,b.currency from latest_user_account_info luai join balance b on luai.account_id = b.account_id
+            with latest_user_info as (
+                select
+                    id as party_id,
+                    external_id,
+                    status as party_status
+                from
+                    party
+                where
+                    external_id = :externalUserId
+                order by
+                    record_creation_timestamp desc
+                limit
+                    1
+            ), latest_user_account_info as (
+                select
+                    lui.*,
+                    a.id as account_id,
+                    a.account_number,
+                    a.status as account_status
+                from
+                    account a
+                    join latest_user_info lui on lui.party_id = a.party_id
+                where
+                    account_number = :accountNumber
+                order by
+                    a.record_creation_timestamp desc
+                limit
+                    1
+            )
+            select
+                luai.*,
+                b.amount as balance_amount,
+                b.currency
+            from
+                latest_user_account_info luai
+                join balance b on luai.account_id = b.account_id
             """;
 
     private static final String FETCH_ALL_TRANSACTIONS_SQL = "select * from transaction_log where party_id : partyId and account_id = :accountId order by record_creation_timestamp desc";
@@ -74,10 +106,10 @@ public class TransactionRepository {
         final UUID accountId = transaction.accountIdentifier().id();
         var lockBalanceParam = new MapSqlParameterSource();
         lockBalanceParam.addValue("accountId", accountId);
-        jdbcTemplate.update(LOCK_BALANCE_FOR_ACCOUNT, lockBalanceParam);
+        jdbcTemplate.execute(LOCK_BALANCE_FOR_ACCOUNT, lockBalanceParam, ps -> null
+        );
 
-        var updateBalanceParam = new MapSqlParameterSource();
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
+
 
         record TransactionSupport(String sql, Boolean creditDebitIndicator) {}
 
@@ -85,6 +117,11 @@ public class TransactionRepository {
             case CreditTransaction creditTransaction -> new TransactionSupport(UPDATE_BALANCE_CREDIT, true);
             case DebitTransaction debitTransaction -> new TransactionSupport(UPDATE_BALANCE_DEBIT, false);
         };
+
+        var updateBalanceParam = new MapSqlParameterSource();
+        updateBalanceParam.addValue("transactionAmount", transaction.transactionAmount().amount());
+        updateBalanceParam.addValue("accountId", accountId);
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
 
         final int updatedRows = jdbcTemplate.update(action.sql, updateBalanceParam, keyHolder);
 
@@ -95,7 +132,7 @@ public class TransactionRepository {
             throw new BalanceUpdateException(message);
         }
 
-        final BigDecimal updatedAmount = new BigDecimal(Objects.requireNonNull(keyHolder.getKeyAs(String.class)));
+        final BigDecimal updatedAmount = keyHolder.getKeyAs(BigDecimal.class);
 
         var transactionLogParam = new MapSqlParameterSource();
         transactionLogParam.addValue("id", transaction.transactionId().id());
@@ -108,7 +145,7 @@ public class TransactionRepository {
         transactionLogParam.addValue("currency", transaction.transactionAmount().currency());
         transactionLogParam.addValue("amount", transaction.transactionAmount().amount());
         transactionLogParam.addValue("runningBalance", updatedAmount);
-        transactionLogParam.addValue("recordCreationTimestamp", transaction.auditData().createdTimestamp());
+        transactionLogParam.addValue("recordCreationTimestamp", Timestamp.from(transaction.auditData().createdTimestamp()), Types.TIMESTAMP);
 
         jdbcTemplate.update(INSERT_TRANSACTION_LOG, transactionLogParam);
 
@@ -117,7 +154,7 @@ public class TransactionRepository {
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public Optional<UserAccountBalanceInfo> fetchLatestStatusForUserAndAccount(String userId, String accountNumber) {
         var param = new MapSqlParameterSource();
-        param.addValue("userId", userId);
+        param.addValue("externalUserId", userId);
         param.addValue("accountNumber", accountNumber);
 
         try {
