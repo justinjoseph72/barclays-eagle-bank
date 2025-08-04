@@ -117,7 +117,7 @@ public class V1ApiController implements V1Api {
     public ResponseEntity<TransactionResponse> fetchAccountTransactionByID(
             @Pattern(regexp = "^01\\d{6}$") @Parameter(name = "accountNumber", description = "Account number of the bank account", required = true, in = ParameterIn.PATH)
             @PathVariable("accountNumber") String accountNumber,
-            @Pattern(regexp = "^tan-[A-Za-z0-9]$") @Parameter(name = "transactionId", description = "ID of the transaction", required = true, in = ParameterIn.PATH)
+            @Pattern(regexp = "^tan-[A-Za-z0-9]{32}$") @Parameter(name = "transactionId", description = "ID of the transaction", required = true, in = ParameterIn.PATH)
             @PathVariable("transactionId") String transactionId,
             @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
             @RequestHeader(value = "Authorization", required = true) String authorization

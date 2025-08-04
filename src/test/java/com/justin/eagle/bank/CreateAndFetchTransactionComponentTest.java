@@ -115,12 +115,25 @@ public class CreateAndFetchTransactionComponentTest extends BaseComponentTest {
                 }
                 """;
 
-        mockMvc.perform(post("/v1/accounts/{accountNumber}/transactions", accountNumber)
+        var response1 = mockMvc.perform(post("/v1/accounts/{accountNumber}/transactions", accountNumber)
                         .contentType("application/json")
                         .header("Authorization", authToken)
                         .content(transactionPayload))
                 .andExpect(status().is(201))
                 .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.amount").value(100.67))
+                .andExpect(jsonPath("$.type").value("deposit"))
+                .andReturn().getResponse().getContentAsString();
+        final String txId1 = JsonPath.parse(response1).read("$.id").toString();
+        System.out.println(txId1);
+
+        //fetching transaction details
+        mockMvc.perform(get("/v1/accounts/{accountNumber}/transactions/{transactionId}", accountNumber, txId1)
+                        .contentType("application/json")
+                        .header("Authorization", authToken)
+                        .content(transactionPayload))
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.id").value(txId1))
                 .andExpect(jsonPath("$.amount").value(100.67))
                 .andExpect(jsonPath("$.type").value("deposit"));
 
