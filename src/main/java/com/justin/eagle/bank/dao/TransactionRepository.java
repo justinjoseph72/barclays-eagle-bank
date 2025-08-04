@@ -89,8 +89,8 @@ public class TransactionRepository {
                 join balance b on luai.account_id = b.account_id
             """;
 
-    private static final String FETCH_ALL_TRANSACTIONS_SQL = "select * from transaction_log where party_id : partyId and account_id = :accountId order by record_creation_timestamp desc";
-    private static final String FETCH_TRANSACTION_SQL = "select * from transaction_log where party_id : partyId and account_id = :accountId and transaction_id = :transactionId";
+    private static final String FETCH_ALL_TRANSACTIONS_SQL = "select * from transaction_log where party_id = :partyId and account_id = :accountId order by record_creation_timestamp desc";
+    private static final String FETCH_TRANSACTION_SQL = "select * from transaction_log where party_id = :partyId and account_id = :accountId and transaction_id = :transactionId";
 
 
     public TransactionRepository(NamedParameterJdbcTemplate jdbcTemplate, UserAccountBalanceInfoRowMapper usrAccountBalanceInfoRowMapper,

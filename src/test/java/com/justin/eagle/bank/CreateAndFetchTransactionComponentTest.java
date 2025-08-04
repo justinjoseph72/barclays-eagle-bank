@@ -1,11 +1,12 @@
 package com.justin.eagle.bank;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 public class CreateAndFetchTransactionComponentTest extends BaseComponentTest {
 
@@ -25,14 +26,16 @@ public class CreateAndFetchTransactionComponentTest extends BaseComponentTest {
                 }
                 """;
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/v1/accounts/{accountNumber}/transactions", accountNumber)
+        var creditResponse1 = mockMvc.perform(post("/v1/accounts/{accountNumber}/transactions", accountNumber)
                 .contentType("application/json")
                 .header("Authorization", authToken)
                 .content(transactionPayload))
                 .andExpect(status().is(201))
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.amount").value(100.67))
-                .andExpect(jsonPath("$.type").value("deposit"));
+                .andExpect(jsonPath("$.type").value("deposit"))
+                .andReturn().getResponse().getContentAsString();
+        final String txId1 = JsonPath.parse(creditResponse1).read("$.id").toString();
 
         //Checking balance is updated in the account
 
@@ -49,14 +52,16 @@ public class CreateAndFetchTransactionComponentTest extends BaseComponentTest {
                 }
                 """;
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/v1/accounts/{accountNumber}/transactions", accountNumber)
+        var creditResponse2 = mockMvc.perform(post("/v1/accounts/{accountNumber}/transactions", accountNumber)
                         .contentType("application/json")
                         .header("Authorization", authToken)
                         .content(depositTransaction_2))
                 .andExpect(status().is(201))
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.amount").value(50.97))
-                .andExpect(jsonPath("$.type").value("deposit"));
+                .andExpect(jsonPath("$.type").value("deposit"))
+                .andReturn().getResponse().getContentAsString();
+        final String txId2 = JsonPath.parse(creditResponse2).read("$.id").toString();
 
         // checking balance is update
         verifyAccountBalance(accountNumber, authToken, 151.64);
@@ -70,16 +75,27 @@ public class CreateAndFetchTransactionComponentTest extends BaseComponentTest {
                 }
                 """;
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/v1/accounts/{accountNumber}/transactions", accountNumber)
+        var withDrawResponse = mockMvc.perform(post("/v1/accounts/{accountNumber}/transactions", accountNumber)
                         .contentType("application/json")
                         .header("Authorization", authToken)
                         .content(withDrawTransaction))
                 .andExpect(status().is(201))
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.amount").value(30.24))
-                .andExpect(jsonPath("$.type").value("withdrawal"));
+                .andExpect(jsonPath("$.type").value("withdrawal"))
+                .andReturn().getResponse().getContentAsString();
+        final String txId3 = JsonPath.parse(withDrawResponse).read("$.id").toString();
 
         verifyAccountBalance(accountNumber, authToken, 121.40);
+
+        //fetching all the transactions for the account
+        mockMvc.perform(get("/v1/accounts/{accountNumber}/transactions", accountNumber)
+                        .contentType("application/json")
+                        .header("Authorization", authToken))
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.transactions[0].id").value(txId3))
+                .andExpect(jsonPath("$.transactions[1].id").value(txId2))
+                .andExpect(jsonPath("$.transactions[2].id").value(txId1));
 
     }
 
@@ -99,7 +115,7 @@ public class CreateAndFetchTransactionComponentTest extends BaseComponentTest {
                 }
                 """;
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/v1/accounts/{accountNumber}/transactions", accountNumber)
+        mockMvc.perform(post("/v1/accounts/{accountNumber}/transactions", accountNumber)
                         .contentType("application/json")
                         .header("Authorization", authToken)
                         .content(transactionPayload))
@@ -123,7 +139,7 @@ public class CreateAndFetchTransactionComponentTest extends BaseComponentTest {
                 }
                 """;
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/v1/accounts/{accountNumber}/transactions", accountNumber)
+        mockMvc.perform(post("/v1/accounts/{accountNumber}/transactions", accountNumber)
                         .contentType("application/json")
                         .header("Authorization", authToken)
                         .content(withDrawTransaction))
@@ -143,7 +159,7 @@ public class CreateAndFetchTransactionComponentTest extends BaseComponentTest {
                 }
                 """;
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/v1/accounts/{accountNumber}/transactions", accountNumber)
+        mockMvc.perform(post("/v1/accounts/{accountNumber}/transactions", accountNumber)
                         .contentType("application/json")
                         .header("Authorization", authToken)
                         .content(withDrawTransaction_2))
@@ -161,7 +177,7 @@ public class CreateAndFetchTransactionComponentTest extends BaseComponentTest {
                 }
                 """;
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/v1/accounts/{accountNumber}/transactions", accountNumber)
+        mockMvc.perform(post("/v1/accounts/{accountNumber}/transactions", accountNumber)
                         .contentType("application/json")
                         .header("Authorization", authToken)
                         .content(withDrawTransaction_3))
