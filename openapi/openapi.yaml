@@ -160,6 +160,7 @@ paths:
     patch:
       tags:
         - account
+        - not_implemented
       description: Update account by account number.
       operationId: updateAccountByAccountNumber
       parameters:
@@ -219,6 +220,7 @@ paths:
     delete:
       tags:
         - account
+        - not_implemented
       description: Delete account by account number.
       operationId: deleteAccountByAccountNumber
       parameters:
@@ -551,6 +553,7 @@ paths:
     patch:
       tags:
         - user
+        - not_implemented
       description: Update user by ID.
       operationId: updateUserByID
       parameters:
@@ -610,6 +613,7 @@ paths:
     delete:
       tags:
         - user
+        - not_implemented
       description: Delete user by ID.
       operationId: deleteUserByID
       parameters:

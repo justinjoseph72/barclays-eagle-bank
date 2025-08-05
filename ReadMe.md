@@ -57,3 +57,4 @@ A value __must__ be put in this header in order to use.
 I used open api codegen to generate the Controller code an in order to inject the header to the controller method, I added the header to each of the api requiring authorization.
 But swagger will not pass the value put in the header field and will use the token used in the Authorize button and inject as an Authroization header. This can be seen in the generated curl.
 
+The apis tagged as `not_implemented` would return http status 501 Not Implemented as I could not complete them in the given time. 
