@@ -3,7 +3,10 @@
 ### Prerequisite
 - Java 21
 - Postgres instance (can use docker container)
-- Gradle (can use the built in gradlew wrapper)
+- Gradle (can use the builtin gradlew wrapper)
+
+The application is build using Spring Boot frame work and is compiled in Java 21 using gradle build tool.
+The service exposes rest apis to create and fetch users,accounts and transactions for Eagle bank customers. 
 
 ## Starting the app in Local machine
 
@@ -36,11 +39,13 @@ Start and instance of postgres database using the command
 ./setupPostgres.sh
 ```
 
-Create a container of the app using the following command
+Create a container of the app using the following command. The container exposes port 8080 which can be mapped to any port on the local machine.
+The following command will map the app to local port 8080
 ```bash
 docker run --rm --name justin-eagle-bank-cont -p 8080:8080 justin-eagle-bank-img:latest
 ```
-__Note__: the docker container uses a profile with name docker and the postgres host is set to 172.17.0.1 which is the gateway for the network bridge. Although I have run and tested this in Linux OS, I am not sure if this port will be the same in the Mac and Window OS. Kindly update the host ip to the correct ip and then build the image.
+__Note__: the docker container uses a profile with name docker and the postgres host is set to 172.17.0.1 which is the gateway for the network bridge. Although I have run and tested this in Linux OS, I am not sure if this port will be the same in the Mac and Window OS.
+Kindly update the host ip to the correct ip and then build the image.
 
 
 ## Using the apis

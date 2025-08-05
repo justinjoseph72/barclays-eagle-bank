@@ -2,7 +2,7 @@
 set -e
 set -x
 
-./gradlew clean bootJar -x test
+./gradlew clean bootJar
 
 cp build/libs/Bank*exec.jar /tmp/service.jar
 
