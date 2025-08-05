@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: EagleBank
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://172.17.0.1:5432/postgres
+    username: postgres
+    password: postgres
+    hikari:
+      poolName: BankDbHikariCp
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+      autocommit: false
+      maximumPoolSize: 10
+      data-source-properties:
+        stringtype: unspecified
+  liquibase:
+    enabled: true
+    change-log : 'classpath:db/changelog/db.changelog-master.xml'
+
+app:
+  config:
+    auth-expiry-seconds: "${AUTH_EXPIRY_SECONDS:300}"
