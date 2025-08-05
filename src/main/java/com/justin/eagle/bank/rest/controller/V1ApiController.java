@@ -152,7 +152,7 @@ public class V1ApiController implements V1Api {
                 .map(userResponse -> new ResponseEntity<>(userResponse, HttpStatus.OK))
                 .orElseThrow(() -> {
                     log.error("no data for user '{}' found", userId);
-                    return new UserNotFoundException();
+                    return new UserNotFoundException(userId);
                 });
     }
 

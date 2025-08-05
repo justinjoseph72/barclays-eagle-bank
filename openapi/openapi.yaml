@@ -670,6 +670,7 @@ paths:
     post:
       tags:
         - user
+        - authorize
       description: Authorize a user id.
       operationId: authorize user id
       parameters:

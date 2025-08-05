@@ -101,7 +101,7 @@ class AccountServiceImpl implements AccountService {
                 .map(UserStatusDbInfo::partyId)
                 .orElseThrow(() -> {
                     log.warn("user with id '{}' not found", userId);
-                    return new UserNotFoundException();
+                    return new UserNotFoundException(userId);
                 });
     }
 }

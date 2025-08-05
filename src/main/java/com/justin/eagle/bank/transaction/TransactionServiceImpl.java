@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 
+import com.justin.eagle.bank.account.NoAccountFoundException;
 import com.justin.eagle.bank.dao.TransactionRepository;
 import com.justin.eagle.bank.dao.model.TransactionLog;
 import com.justin.eagle.bank.dao.model.UserAccountBalanceInfo;
@@ -79,7 +80,7 @@ class TransactionServiceImpl implements TransactionService {
         return userAccountBalanceInfo
                 .orElseThrow(() -> {
                     log.warn("no matching account found for userId '{}' and account number '{}'", userId, accountNumber);
-                    return new UserNotFoundException();
+                    return new NoAccountFoundException(accountNumber);
                 });
     }
 

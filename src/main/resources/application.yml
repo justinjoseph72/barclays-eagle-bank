@@ -20,4 +20,4 @@ spring:
 
 app:
   config:
-    auth-expiry-seconds: "${AUTH_EXPIRY_SECONDS:300}"
+    auth-expiry-seconds: "${AUTH_EXPIRY_SECONDS:3600}"

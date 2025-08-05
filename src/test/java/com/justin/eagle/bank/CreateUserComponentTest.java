@@ -15,7 +15,6 @@ public class CreateUserComponentTest extends BaseComponentTest {
 
 
 
-    @Disabled
     @Test
     void shouldVerifyEmptyStringInThePayloadForCreateUserWillReturn400Error() throws Exception {
 
