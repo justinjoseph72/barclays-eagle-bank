@@ -22,7 +22,7 @@ paths:
         - name: Authorization
           in: header
           description: Bearer JWT
-          required: true
+          required: false
           schema:
             type: string
       security:
@@ -74,7 +74,7 @@ paths:
         - name: Authorization
           in: header
           description: Bearer JWT
-          required: true
+          required: false
           schema:
             type: string
       security:
@@ -115,7 +115,7 @@ paths:
         - name: Authorization
           in: header
           description: Bearer JWT
-          required: true
+          required: false
           schema:
             type: string
       security:
@@ -282,7 +282,7 @@ paths:
         - name: Authorization
           in: header
           description: Bearer JWT
-          required: true
+          required: false
           schema:
             type: string
       requestBody:
@@ -353,7 +353,7 @@ paths:
         - name: Authorization
           in: header
           description: Bearer JWT
-          required: true
+          required: false
           schema:
             type: string
       security:
@@ -419,7 +419,7 @@ paths:
         - name: Authorization
           in: header
           description: Bearer JWT
-          required: true
+          required: false
           schema:
             type: string
       security:
@@ -506,7 +506,7 @@ paths:
         - name: Authorization
           in: header
           description: Bearer JWT
-          required: true
+          required: false
           schema:
             type: string
       security:

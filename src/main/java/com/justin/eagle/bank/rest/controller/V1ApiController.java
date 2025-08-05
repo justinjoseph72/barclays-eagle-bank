@@ -7,6 +7,7 @@ import com.justin.eagle.bank.auth.AuthenticateUserService;
 import com.justin.eagle.bank.domain.ActiveAccount;
 import com.justin.eagle.bank.domain.ApprovedTransaction;
 import com.justin.eagle.bank.domain.PendingAccount;
+import com.justin.eagle.bank.domain.ProvisionedUser;
 import com.justin.eagle.bank.domain.TransactionRequest;
 import com.justin.eagle.bank.generated.openapi.rest.api.V1Api;
 import com.justin.eagle.bank.generated.openapi.rest.model.BankAccountResponse;
@@ -25,11 +26,10 @@ import com.justin.eagle.bank.rest.mappers.TransactionMapper;
 import com.justin.eagle.bank.rest.mappers.UserMapper;
 import com.justin.eagle.bank.transaction.TransactionService;
 import com.justin.eagle.bank.user.UserService;
-import com.justin.eagle.bank.domain.ProvisionedUser;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,10 +61,10 @@ public class V1ApiController implements V1Api {
 
     @Override
     public ResponseEntity<BankAccountResponse> createAccount(
-            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
-            @RequestHeader(value = "Authorization", required = true) String authorization,
             @Parameter(name = "CreateBankAccountRequest", description = "Create a new bank account for the user", required = true)
-            @Valid @RequestBody CreateBankAccountRequest createBankAccountRequest) {
+            @Valid @RequestBody CreateBankAccountRequest createBankAccountRequest,
+            @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
         final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
         PendingAccount pendingAccount = accountMapper.buildPendingAccount(authorizedUserId, createBankAccountRequest);
         final ActiveAccount newAccount = accountService.createNewAccount(pendingAccount);
@@ -72,10 +72,15 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<TransactionResponse> createTransaction(
-            @Pattern(regexp = "^01\\d{6}$") @Parameter(name = "accountNumber", description = "Account number of the bank account", required = true, in = ParameterIn.PATH) @PathVariable("accountNumber") String accountNumber,
-            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER) @RequestHeader(value = "Authorization", required = true) String authorization,
-            @Parameter(name = "CreateTransactionRequest", description = "Create a new transaction", required = true) @Valid @RequestBody CreateTransactionRequest createTransactionRequest) {
+            @Pattern(regexp = "^01\\d{6}$")
+            @Parameter(name = "accountNumber", description = "Account number of the bank account", required = true, in = ParameterIn.PATH)
+            @PathVariable("accountNumber") String accountNumber,
+            @Parameter(name = "CreateTransactionRequest", description = "Create a new transaction", required = true)
+            @Valid @RequestBody CreateTransactionRequest createTransactionRequest,
+            @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
 
         final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
         TransactionRequest request = transactionMapper.buildTransactionRequest(authorizedUserId, accountNumber, createTransactionRequest);
@@ -84,6 +89,7 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<UserResponse> createUser(@Parameter(name = "CreateUserRequest", description = "Create a new user", required = true)
     @Valid @RequestBody CreateUserRequest createUserRequest) {
 
@@ -92,34 +98,38 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<Void> deleteAccountByAccountNumber(String accountNumber) {
         return V1Api.super.deleteAccountByAccountNumber(accountNumber);
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<Void> deleteUserByID(String userId) {
         return V1Api.super.deleteUserByID(userId);
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<BankAccountResponse> fetchAccountByAccountNumber(
             @Pattern(regexp = "^01\\d{6}$")
             @Parameter(name = "accountNumber", description = "Account number of the bank account", required = true, in = ParameterIn.PATH)
             @PathVariable("accountNumber") String accountNumber,
-            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
-            @RequestHeader(value = "Authorization", required = true) String authorization) {
+            @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
         final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
         final ActiveAccount activeAccount = accountService.fetchAccountDetails(accountNumber, authorizedUserId);
         return new ResponseEntity<>(accountMapper.buildAccountResponse(activeAccount), HttpStatus.OK);
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<TransactionResponse> fetchAccountTransactionByID(
             @Pattern(regexp = "^01\\d{6}$") @Parameter(name = "accountNumber", description = "Account number of the bank account", required = true, in = ParameterIn.PATH)
             @PathVariable("accountNumber") String accountNumber,
             @Pattern(regexp = "^tan-[A-Za-z0-9]{32}$") @Parameter(name = "transactionId", description = "ID of the transaction", required = true, in = ParameterIn.PATH)
             @PathVariable("transactionId") String transactionId,
-            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
+            @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
             @RequestHeader(value = "Authorization", required = true) String authorization
     ) {
         final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
@@ -128,10 +138,11 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<UserResponse> fetchUserByID(@Pattern(regexp = "^usr-[A-Za-z0-9]+$")
             @Parameter(name = "userId", description = "ID of the user", required = true, in = ParameterIn.PATH)
             @PathVariable("userId") String userId,
-            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
+            @Parameter(name = "Authorization", description = "Bearer JWT",  in = ParameterIn.HEADER)
             @RequestHeader(value = "Authorization", required = true) String authorization) {
 
         final String authorizedUserId = authenticateUserService.authorizeRequest(userId, authorization);
@@ -146,10 +157,11 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<ListTransactionsResponse> listAccountTransaction(
             @Pattern(regexp = "^01\\d{6}$") @Parameter(name = "accountNumber", description = "Account number of the bank account", required = true, in = ParameterIn.PATH)
             @PathVariable("accountNumber") String accountNumber,
-            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
+            @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
             @RequestHeader(value = "Authorization", required = true) String authorization) {
         final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
         final List<ApprovedTransaction> approvedTransactions = transactionService.fetchTransactions(authorizedUserId, accountNumber);
@@ -158,8 +170,9 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<ListBankAccountsResponse> listAccounts(
-            @NotNull @Parameter(name = "Authorization", description = "Bearer JWT", required = true, in = ParameterIn.HEADER)
+           @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
             @RequestHeader(value = "Authorization", required = true) String authorization) {
         final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
         final List<ActiveAccount> activeAccounts = accountService.fetchAllAccountsForUser(authorizedUserId);
@@ -170,11 +183,13 @@ public class V1ApiController implements V1Api {
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<BankAccountResponse> updateAccountByAccountNumber(String accountNumber, UpdateBankAccountRequest updateBankAccountRequest) {
         return V1Api.super.updateAccountByAccountNumber(accountNumber, updateBankAccountRequest);
     }
 
     @Override
+    @SecurityRequirement(name = "Authorization")
     public ResponseEntity<UserResponse> updateUserByID(String userId, UpdateUserRequest updateUserRequest) {
         return V1Api.super.updateUserByID(userId, updateUserRequest);
     }
