@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -e
+set -x
 
 ./gradlew clean bootJar -x test
 

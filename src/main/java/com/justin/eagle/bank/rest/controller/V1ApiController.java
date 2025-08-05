@@ -59,6 +59,7 @@ public class V1ApiController implements V1Api {
 
     @Autowired TransactionMapper transactionMapper;
 
+
     @Override
     public ResponseEntity<BankAccountResponse> createAccount(
             @Parameter(name = "CreateBankAccountRequest", description = "Create a new bank account for the user", required = true)
@@ -92,7 +93,6 @@ public class V1ApiController implements V1Api {
     @SecurityRequirement(name = "Authorization")
     public ResponseEntity<UserResponse> createUser(@Parameter(name = "CreateUserRequest", description = "Create a new user", required = true)
     @Valid @RequestBody CreateUserRequest createUserRequest) {
-
         final ProvisionedUser user = userService.createUser(userMapper.createNewUser(createUserRequest));
         return new ResponseEntity<>(userMapper.buildUserResponse(user), HttpStatus.CREATED);
     }
@@ -130,7 +130,7 @@ public class V1ApiController implements V1Api {
             @Pattern(regexp = "^tan-[A-Za-z0-9]{32}$") @Parameter(name = "transactionId", description = "ID of the transaction", required = true, in = ParameterIn.PATH)
             @PathVariable("transactionId") String transactionId,
             @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
-            @RequestHeader(value = "Authorization", required = true) String authorization
+            @RequestHeader(value = "Authorization") String authorization
     ) {
         final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
         final ApprovedTransaction transaction = transactionService.fetchTransaction(authorizedUserId, accountNumber, transactionId);
@@ -142,8 +142,8 @@ public class V1ApiController implements V1Api {
     public ResponseEntity<UserResponse> fetchUserByID(@Pattern(regexp = "^usr-[A-Za-z0-9]+$")
             @Parameter(name = "userId", description = "ID of the user", required = true, in = ParameterIn.PATH)
             @PathVariable("userId") String userId,
-            @Parameter(name = "Authorization", description = "Bearer JWT",  in = ParameterIn.HEADER)
-            @RequestHeader(value = "Authorization", required = true) String authorization) {
+            @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
+            @RequestHeader(value = "Authorization") String authorization) {
 
         final String authorizedUserId = authenticateUserService.authorizeRequest(userId, authorization);
 
@@ -162,7 +162,7 @@ public class V1ApiController implements V1Api {
             @Pattern(regexp = "^01\\d{6}$") @Parameter(name = "accountNumber", description = "Account number of the bank account", required = true, in = ParameterIn.PATH)
             @PathVariable("accountNumber") String accountNumber,
             @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
-            @RequestHeader(value = "Authorization", required = true) String authorization) {
+            @RequestHeader(value = "Authorization") String authorization) {
         final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
         final List<ApprovedTransaction> approvedTransactions = transactionService.fetchTransactions(authorizedUserId, accountNumber);
 
@@ -172,8 +172,8 @@ public class V1ApiController implements V1Api {
     @Override
     @SecurityRequirement(name = "Authorization")
     public ResponseEntity<ListBankAccountsResponse> listAccounts(
-           @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
-            @RequestHeader(value = "Authorization", required = true) String authorization) {
+            @Parameter(name = "Authorization", description = "Bearer JWT", in = ParameterIn.HEADER)
+            @RequestHeader(value = "Authorization") String authorization) {
         final String authorizedUserId = authenticateUserService.findUserIdFromAuthToken(authorization);
         final List<ActiveAccount> activeAccounts = accountService.fetchAllAccountsForUser(authorizedUserId);
         final List<BankAccountResponse> bankAccounts = activeAccounts.stream()
